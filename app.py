@@ -299,7 +299,7 @@ def create_gradcam_visualization(model, image, prediction):
 def main():
     # Header
     st.markdown('<h1 class="main-header">🏥 Medical Diagnosis Assistant</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666;">Chest X-Ray Analysis for Pneumonia Detection</p>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666;">AI-Powered Medical File Analysis</p>', unsafe_allow_html=True)
     
     # Load model
     with st.spinner("Loading model..."):
@@ -334,12 +334,12 @@ def main():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.markdown('<h2 class="sub-header">📤 Upload X-Ray Image</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="sub-header">📤 Upload Medical File</h2>', unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader(
-            "Choose a chest X-ray image or medical document...",
+            "Upload your medical file here...",
             type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
-            help="Upload a chest X-ray image (JPG, PNG) or medical document (PDF, DOCX, DOC, TXT)"
+            help="Upload medical images (JPG, PNG) or documents (PDF, DOCX, DOC, TXT)"
         )
         
         if uploaded_file is not None:
