@@ -44,9 +44,17 @@ class GradCAM:
         if hasattr(self.model, 'resnet'):
             # Get the last layer of the ResNet backbone
             return self.model.resnet.layer4[-1]
+        elif hasattr(self.model, 'features'):
+            # For simple models like SimpleChestXRayModel
+            # Use the last convolutional layer in features
+            return self.model.features[-2]  # Last conv layer before AdaptiveAvgPool2d
         else:
             # Fallback for other architectures
-            return list(self.model.modules())[-2]
+            conv_layers = [m for m in self.model.modules() if isinstance(m, torch.nn.Conv2d)]
+            if conv_layers:
+                return conv_layers[-1]
+            else:
+                raise ValueError("No suitable target layer found for Grad-CAM")
     
     def remove_hooks(self):
         """Remove registered hooks"""
