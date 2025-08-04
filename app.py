@@ -79,18 +79,19 @@ def load_model():
     """Load the trained model"""
     try:
         device = get_device()
-        model = ChestXRayModel(num_classes=2, pretrained=False)
-        model = model.to(device)
         
-        # Load trained weights
-        model_path = "models/best_model.pt"
+        # Try to load the demo model first
+        model_path = "models/chest_xray_demo.pth"
         if os.path.exists(model_path):
-            optimizer = torch.optim.Adam(model.parameters())
-            model, optimizer, epoch, loss = load_checkpoint(model, optimizer, model_path)
+            # Use a simple model for demo
+            from create_demo_model import SimpleChestXRayModel
+            model = SimpleChestXRayModel(num_classes=2)
+            model = model.to(device)
+            model.load_state_dict(torch.load(model_path, map_location=device))
             model.eval()
             return model, device
         else:
-            st.error("Model file not found. Please train the model first.")
+            st.error("Model file not found. Please run create_demo_model.py first.")
             return None, None
     except Exception as e:
         st.error(f"Error loading model: {e}")
