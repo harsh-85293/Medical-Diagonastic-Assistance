@@ -15,7 +15,8 @@ from tqdm import tqdm
 import argparse
 
 from utils.data_utils import create_data_loaders, get_device, save_checkpoint
-from utils.model_utils import ChestXRayModel, train_epoch, validate_epoch, plot_training_history
+from utils.model_utils import MultiClassChestXRayModel, train_epoch, validate_epoch
+from utils.data_utils import plot_training_history
 
 def train_model(args):
     """Main training function"""
@@ -38,7 +39,7 @@ def train_model(args):
     
     # Create model
     print("Creating model...")
-    model = ChestXRayModel(num_classes=2, pretrained=True)
+    model = MultiClassChestXRayModel(num_classes=2, pretrained=True)
     model = model.to(device)
     
     # Loss function and optimizer

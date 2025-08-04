@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
-from utils.model_utils import ChestXRayModel
+from utils.model_utils import MultiClassChestXRayModel
 from utils.data_utils import get_device, save_checkpoint
 import argparse
 
@@ -41,7 +41,7 @@ def train_demo_model(data_loader, device, epochs=5):
     print(f"Training demo model on {device}...")
     
     # Initialize model
-    model = ChestXRayModel(num_classes=2)
+    model = MultiClassChestXRayModel(num_classes=2)
     model = model.to(device)
     
     # Loss and optimizer
@@ -108,7 +108,7 @@ def main():
     # Test model loading
     print("Testing model loading...")
     try:
-        loaded_model = ChestXRayModel(num_classes=2)
+        loaded_model = MultiClassChestXRayModel(num_classes=2)
         loaded_model.load_state_dict(torch.load(args.output_path, map_location=device))
         loaded_model.eval()
         print("✅ Model loading test successful!")

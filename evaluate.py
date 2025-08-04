@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 import argparse
 
 from utils.data_utils import create_data_loaders, get_device, load_checkpoint
-from utils.model_utils import ChestXRayModel, evaluate_model, plot_confusion_matrix, plot_roc_curve
+from utils.model_utils import MultiClassChestXRayModel, evaluate_model, plot_evaluation_results
 
 def evaluate_model_comprehensive(args):
     """Comprehensive model evaluation"""
@@ -35,7 +35,7 @@ def evaluate_model_comprehensive(args):
     
     # Create model
     print("Creating model...")
-    model = ChestXRayModel(num_classes=2, pretrained=False)
+    model = MultiClassChestXRayModel(num_classes=2, pretrained=False)
     model = model.to(device)
     
     # Load trained model
@@ -74,13 +74,10 @@ def evaluate_model_comprehensive(args):
         target_names=class_names
     ))
     
-    # Plot confusion matrix
-    print("\nGenerating confusion matrix...")
-    plot_confusion_matrix(results['labels'], results['predictions'], class_names)
-    
-    # Plot ROC curve
-    print("Generating ROC curve...")
-    plot_roc_curve(results['labels'], results['probabilities'], class_names)
+    # Plot evaluation results
+    print("\nGenerating evaluation plots...")
+    plot_evaluation_results(results['labels'], results['predictions'], results['probabilities'], 
+                          os.path.join(args.model_dir, 'evaluation_results.png'))
     
     # Save results
     results_file = os.path.join(args.model_dir, 'evaluation_results.txt')
