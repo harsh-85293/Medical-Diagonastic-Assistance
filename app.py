@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Streamlit App for Medical Diagnosis Assistant
-Provides a web interface for chest X-ray analysis
+Multi-Class Medical Diagnosis Assistant Streamlit App
+Supports detection of multiple diseases from chest X-ray images
 """
 
 import streamlit as st
@@ -9,19 +9,22 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
 from PIL import Image
 import io
 import os
 import cv2
 import PyPDF2
 import docx
-from utils.data_utils import get_transforms, get_device, load_checkpoint
-from utils.model_utils import ChestXRayModel
-from gradcam import GradCAM, generate_gradcam_for_single_image
+import pandas as pd
+from utils.data_utils import get_transforms, get_device, DISEASE_LABELS, DISEASE_DISPLAY_NAMES
+from utils.model_utils import create_model
+from gradcam import generate_multi_class_gradcam, generate_gradcam_for_single_image
 
 # Page configuration
 st.set_page_config(
-    page_title="Medical Diagnosis Assistant",
+    page_title="Multi-Class Medical Diagnosis Assistant",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -45,15 +48,16 @@ st.markdown("""
         padding: 1rem;
         border-radius: 10px;
         margin: 1rem 0;
+        border-left: 5px solid;
     }
     .normal-prediction {
         background-color: #d4edda;
-        border: 1px solid #c3e6cb;
+        border-color: #28a745;
         color: #155724;
     }
-    .pneumonia-prediction {
+    .disease-prediction {
         background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
+        border-color: #dc3545;
         color: #721c24;
     }
     .confidence-bar {
@@ -67,33 +71,39 @@ st.markdown("""
         border-radius: 5px;
         transition: width 0.3s ease;
     }
-    .normal-confidence {
-        background-color: #28a745;
-    }
-    .pneumonia-confidence {
-        background-color: #dc3545;
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        margin: 0.5rem 0;
     }
 </style>
 """, unsafe_allow_html=True)
 
 @st.cache_resource
 def load_model():
-    """Load the trained model"""
+    """Load the trained multi-class model"""
     try:
         device = get_device()
         
-        # Try to load the demo model first
-        model_path = "models/chest_xray_demo.pth"
+        # Try to load the multi-class model
+        model_path = "models/multiclass_best_model.pth"
         if os.path.exists(model_path):
-            # Use a simple model for demo
-            from create_demo_model import SimpleChestXRayModel
-            model = SimpleChestXRayModel(num_classes=2)
+            model = create_model('resnet50', len(DISEASE_LABELS), pretrained=False)
             model = model.to(device)
-            model.load_state_dict(torch.load(model_path, map_location=device))
+            
+            # Load checkpoint
+            checkpoint = torch.load(model_path, map_location=device)
+            if isinstance(checkpoint, dict):
+                model.load_state_dict(checkpoint['model_state_dict'])
+            else:
+                model.load_state_dict(checkpoint)
+            
             model.eval()
             return model, device
         else:
-            st.error("Model file not found. Please run create_demo_model.py first.")
+            st.error("Multi-class model not found. Please train the model first.")
             return None, None
     except Exception as e:
         st.error(f"Error loading model: {e}")
@@ -112,201 +122,108 @@ def preprocess_image(image):
     return input_tensor
 
 def predict_image(model, device, input_tensor):
-    """Make prediction on the input image"""
+    """Make multi-class prediction on the input image"""
     with torch.no_grad():
         input_tensor = input_tensor.to(device)
         outputs = model(input_tensor)
         probabilities = F.softmax(outputs, dim=1)
-        prediction = torch.argmax(outputs, dim=1).item()
-        confidence = probabilities[0, prediction].item()
+        
+        # Get top 3 predictions
+        top_probs, top_indices = torch.topk(probabilities[0], 3)
+        
+        predictions = []
+        for i in range(3):
+            predictions.append({
+                'disease': DISEASE_LABELS[top_indices[i].item()],
+                'display_name': DISEASE_DISPLAY_NAMES[DISEASE_LABELS[top_indices[i].item()]],
+                'probability': top_probs[i].item(),
+                'confidence': top_probs[i].item()
+            })
     
-    return prediction, confidence, probabilities[0].cpu().numpy()
+    return predictions, probabilities[0].cpu().numpy()
 
 def validate_image_content(image):
     """Validate if the uploaded image is likely a medical image"""
     try:
-        # Convert to numpy array for analysis
         img_array = np.array(image)
         
         # Check if image is grayscale or has medical characteristics
         if len(img_array.shape) == 3:
-            # Check if it's mostly grayscale (medical images often are)
             r, g, b = img_array[:,:,0], img_array[:,:,1], img_array[:,:,2]
             if np.mean(np.abs(r - g)) < 10 and np.mean(np.abs(r - b)) < 10:
                 return True, "Image appears to be medical (grayscale-like)"
         
-        # Check image dimensions (medical images are usually square-ish)
+        # Check image dimensions
         height, width = img_array.shape[:2]
         aspect_ratio = width / height
         if 0.5 <= aspect_ratio <= 2.0:
             return True, "Image dimensions are appropriate for medical images"
         
-        # Basic validation passed
         return True, "Image format is valid"
         
     except Exception as e:
         return False, f"Error analyzing image: {str(e)}"
 
-def validate_document_content(text_content):
-    """Validate if the uploaded document contains medical content"""
-    try:
-        # Convert to lowercase for easier matching
-        text_lower = text_content.lower()
-        
-        # Medical keywords to look for
-        medical_keywords = [
-            'patient', 'diagnosis', 'treatment', 'symptoms', 'medical', 'doctor',
-            'hospital', 'clinic', 'prescription', 'medication', 'test', 'lab',
-            'x-ray', 'chest', 'pneumonia', 'infection', 'fever', 'cough',
-            'breathing', 'respiratory', 'lung', 'heart', 'blood', 'pressure',
-            'temperature', 'pulse', 'oxygen', 'saturation', 'ct', 'mri', 'scan'
-        ]
-        
-        # Count medical keywords found
-        found_keywords = [word for word in medical_keywords if word in text_lower]
-        
-        if len(found_keywords) >= 2:
-            return True, f"Document contains medical content ({len(found_keywords)} medical terms found)"
-        elif len(text_content.split()) < 10:
-            return False, "Document appears to be too short or empty"
-        else:
-            return True, "Document format is valid (content validation limited)"
-            
-    except Exception as e:
-        return False, f"Error analyzing document: {str(e)}"
-
-def process_uploaded_file(uploaded_file):
-    """Process uploaded file and determine its type"""
-    file_extension = uploaded_file.name.lower().split('.')[-1]
+def create_prediction_chart(predictions):
+    """Create a bar chart for predictions"""
+    diseases = [pred['display_name'] for pred in predictions]
+    probabilities = [pred['probability'] for pred in predictions]
     
-    # Validate file size (max 10MB)
-    if uploaded_file.size > 10 * 1024 * 1024:
-        st.error("❌ File too large! Please upload a file smaller than 10MB.")
-        return None, None, None
-    
-    if file_extension in ['jpg', 'jpeg', 'png']:
-        # Process as image
-        try:
-            image = Image.open(uploaded_file).convert('RGB')
-            
-            # Validate image content
-            is_valid, message = validate_image_content(image)
-            if not is_valid:
-                st.error(f"❌ Invalid medical image: {message}")
-                st.info("💡 Please upload a chest X-ray image or other medical scan.")
-                return None, None, None
-            
-            st.success(f"✅ {message}")
-            return 'image', image, None
-            
-        except Exception as e:
-            st.error(f"❌ Error processing image: {str(e)}")
-            st.info("💡 Please upload a valid image file (JPG, PNG).")
-            return None, None, None
-    
-    elif file_extension == 'pdf':
-        # Process as PDF document
-        try:
-            pdf_reader = PyPDF2.PdfReader(uploaded_file)
-            text_content = ""
-            for page in pdf_reader.pages:
-                text_content += page.extract_text() + "\n"
-            
-            # Validate document content
-            is_valid, message = validate_document_content(text_content)
-            if not is_valid:
-                st.error(f"❌ Invalid medical document: {message}")
-                st.info("💡 Please upload a medical report, patient record, or clinical document.")
-                return None, None, None
-            
-            st.success(f"✅ {message}")
-            return 'document', None, text_content
-            
-        except Exception as e:
-            st.error(f"❌ Error reading PDF: {str(e)}")
-            st.info("💡 Please upload a valid PDF document.")
-            return None, None, None
-    
-    elif file_extension in ['docx', 'doc']:
-        # Process as Word document
-        try:
-            doc = docx.Document(uploaded_file)
-            text_content = ""
-            for paragraph in doc.paragraphs:
-                text_content += paragraph.text + "\n"
-            
-            # Validate document content
-            is_valid, message = validate_document_content(text_content)
-            if not is_valid:
-                st.error(f"❌ Invalid medical document: {message}")
-                st.info("💡 Please upload a medical report, patient record, or clinical document.")
-                return None, None, None
-            
-            st.success(f"✅ {message}")
-            return 'document', None, text_content
-            
-        except Exception as e:
-            st.error(f"❌ Error reading Word document: {str(e)}")
-            st.info("💡 Please upload a valid Word document.")
-            return None, None, None
-    
-    elif file_extension == 'txt':
-        # Process as text file
-        try:
-            text_content = uploaded_file.read().decode('utf-8')
-            
-            # Validate document content
-            is_valid, message = validate_document_content(text_content)
-            if not is_valid:
-                st.error(f"❌ Invalid medical document: {message}")
-                st.info("💡 Please upload a medical report, patient record, or clinical document.")
-                return None, None, None
-            
-            st.success(f"✅ {message}")
-            return 'document', None, text_content
-            
-        except Exception as e:
-            st.error(f"❌ Error reading text file: {str(e)}")
-            st.info("💡 Please upload a valid text file.")
-            return None, None, None
-    
-    else:
-        st.error(f"❌ Unsupported file type: {file_extension}")
-        st.info("💡 Supported formats: JPG, PNG (images) | PDF, DOCX, DOC, TXT (documents)")
-        return None, None, None
-
-def create_gradcam_visualization(model, image, prediction):
-    """Create Grad-CAM visualization"""
-    try:
-        # Save temporary image
-        temp_path = "temp_image.jpg"
-        image.save(temp_path)
-        
-        # Generate Grad-CAM
-        heatmap, overlay = generate_gradcam_for_single_image(
-            model, temp_path, prediction, save_path=None
+    fig = go.Figure(data=[
+        go.Bar(
+            x=diseases,
+            y=probabilities,
+            marker_color=['#28a745' if pred['disease'] == 'NORMAL' else '#dc3545' for pred in predictions],
+            text=[f'{p:.1%}' for p in probabilities],
+            textposition='auto',
         )
-        
-        # Clean up
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-        
-        return heatmap, overlay
-    except Exception as e:
-        st.error(f"Error generating Grad-CAM: {e}")
-        return None, None
+    ])
+    
+    fig.update_layout(
+        title="Top 3 Disease Predictions",
+        xaxis_title="Disease",
+        yaxis_title="Probability",
+        yaxis=dict(range=[0, 1]),
+        height=400
+    )
+    
+    return fig
+
+def create_radar_chart(probabilities):
+    """Create a radar chart for all disease probabilities"""
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatterpolar(
+        r=probabilities,
+        theta=[DISEASE_DISPLAY_NAMES[d] for d in DISEASE_LABELS],
+        fill='toself',
+        name='Disease Probabilities'
+    ))
+    
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 1]
+            )),
+        showlegend=False,
+        title="All Disease Probabilities",
+        height=500
+    )
+    
+    return fig
 
 def main():
     # Header
-    st.markdown('<h1 class="main-header">🏥 Medical Diagnosis Assistant</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666;">AI-Powered Medical File Analysis</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🏥 Multi-Class Medical Diagnosis Assistant</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #666;">AI-Powered Multi-Disease Detection from Chest X-Rays</p>', unsafe_allow_html=True)
     
     # Load model
-    with st.spinner("Loading model..."):
+    with st.spinner("Loading multi-class model..."):
         model, device = load_model()
     
     if model is None:
-        st.error("Failed to load model. Please ensure the model has been trained.")
+        st.error("Failed to load model. Please ensure the multi-class model has been trained.")
         return
     
     # Sidebar
@@ -316,11 +233,19 @@ def main():
        - **Images**: Chest X-rays, medical scans (JPG, PNG)
        - **Documents**: Medical reports, patient records (PDF, DOCX, DOC, TXT)
     
-    2. **For Images**: The AI will analyze and provide diagnosis
+    2. **For Images**: The AI will analyze and detect multiple diseases
     3. **For Documents**: Text will be extracted and displayed
-    4. **View Results**: Analysis and visualizations will appear
+    4. **View Results**: Multi-class analysis and visualizations will appear
     
-    **⚠️ Note**: Only medical-related files are accepted
+    **🏥 Supported Diseases:**
+    - Normal
+    - Pneumonia
+    - COVID-19
+    - Tuberculosis
+    - Pleural Effusion
+    - Pneumothorax
+    - Lung Cancer
+    - Cardiomegaly
     """)
     
     st.sidebar.markdown("## ⚠️ Disclaimer")
@@ -344,82 +269,109 @@ def main():
         
         if uploaded_file is not None:
             # Process uploaded file
-            file_type, image, text_content = process_uploaded_file(uploaded_file)
+            file_extension = uploaded_file.name.lower().split('.')[-1]
             
-            # Initialize variables for use in both columns
-            prediction = None
-            confidence = None
-            all_probabilities = None
-            
-            # Check if file processing was successful
-            if file_type is None:
-                st.warning("⚠️ Please try uploading a different file.")
-                st.markdown("""
-                **📋 Upload Guidelines:**
-                - **Images**: Chest X-rays, medical scans (JPG, PNG)
-                - **Documents**: Medical reports, patient records (PDF, DOCX, DOC, TXT)
-                - **File Size**: Maximum 10MB
-                - **Content**: Must be medical-related
-                """)
+            # Validate file size (max 10MB)
+            if uploaded_file.size > 10 * 1024 * 1024:
+                st.error("❌ File too large! Please upload a file smaller than 10MB.")
                 return
             
-            if file_type == 'image':
-                # Display uploaded image
-                st.image(image, caption="Uploaded X-Ray Image", use_column_width=True)
-                
-                # Preprocess image
-                input_tensor = preprocess_image(image)
-                
-                # Make prediction
-                prediction, confidence, all_probabilities = predict_image(model, device, input_tensor)
-                
-                # Display results
-                st.markdown('<h2 class="sub-header">🔍 Analysis Results</h2>', unsafe_allow_html=True)
-                
-                class_names = ['NORMAL', 'PNEUMONIA']
-                prediction_text = class_names[prediction]
-                
-                # Prediction box
-                if prediction == 0:  # NORMAL
+            if file_extension in ['jpg', 'jpeg', 'png']:
+                # Process as image
+                try:
+                    image = Image.open(uploaded_file).convert('RGB')
+                    
+                    # Validate image content
+                    is_valid, message = validate_image_content(image)
+                    if not is_valid:
+                        st.error(f"❌ Invalid medical image: {message}")
+                        st.info("💡 Please upload a chest X-ray image or other medical scan.")
+                        return
+                    
+                    st.success(f"✅ {message}")
+                    
+                    # Display uploaded image
+                    st.image(image, caption="Uploaded X-Ray Image", use_column_width=True)
+                    
+                    # Preprocess image
+                    input_tensor = preprocess_image(image)
+                    
+                    # Make prediction
+                    predictions, all_probabilities = predict_image(model, device, input_tensor)
+                    
+                    # Display results
+                    st.markdown('<h2 class="sub-header">🔍 Multi-Class Analysis Results</h2>', unsafe_allow_html=True)
+                    
+                    # Top prediction
+                    top_prediction = predictions[0]
+                    prediction_class = "normal-prediction" if top_prediction['disease'] == 'NORMAL' else "disease-prediction"
+                    
                     st.markdown(f"""
-                    <div class="prediction-box normal-prediction">
-                        <h3>✅ Prediction: {prediction_text}</h3>
-                        <p>Confidence: {confidence:.2%}</p>
+                    <div class="prediction-box {prediction_class}">
+                        <h3>🎯 Primary Prediction: {top_prediction['display_name']}</h3>
+                        <p>Confidence: {top_prediction['confidence']:.2%}</p>
                     </div>
                     """, unsafe_allow_html=True)
-                else:  # PNEUMONIA
-                    st.markdown(f"""
-                    <div class="prediction-box pneumonia-prediction">
-                        <h3>⚠️ Prediction: {prediction_text}</h3>
-                        <p>Confidence: {confidence:.2%}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                # Confidence bars
-                st.markdown("### Confidence Breakdown")
-                for i, (class_name, prob) in enumerate(zip(class_names, all_probabilities)):
-                    color_class = "normal-confidence" if i == 0 else "pneumonia-confidence"
-                    st.markdown(f"""
-                    <div>
-                        <strong>{class_name}:</strong> {prob:.2%}
-                        <div class="confidence-bar">
-                            <div class="confidence-fill {color_class}" style="width: {prob*100}%"></div>
+                    
+                    # Show top 3 predictions
+                    st.markdown("### 📊 Top 3 Predictions")
+                    for i, pred in enumerate(predictions):
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <strong>{i+1}. {pred['display_name']}</strong><br>
+                            Confidence: {pred['confidence']:.2%}
                         </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
+                    
+                    # Prediction chart
+                    st.plotly_chart(create_prediction_chart(predictions), use_container_width=True)
+                    
+                    # Radar chart for all diseases
+                    st.markdown("### 📈 All Disease Probabilities")
+                    st.plotly_chart(create_radar_chart(all_probabilities), use_container_width=True)
+                    
+                except Exception as e:
+                    st.error(f"❌ Error processing image: {str(e)}")
+                    st.info("💡 Please upload a valid image file (JPG, PNG).")
+                    return
             
-            elif file_type == 'document':
-                # Display document content
+            elif file_extension in ['pdf', 'docx', 'doc', 'txt']:
+                # Process as document
                 st.markdown('<h2 class="sub-header">📄 Document Content</h2>', unsafe_allow_html=True)
-                
-                # Show file info
                 st.info(f"📎 File: {uploaded_file.name}")
                 
-                # Display text content
-                st.markdown("### Document Text:")
-                st.text_area("Extracted Text", text_content, height=300, disabled=True)
+                # Document processing (same as before)
+                if file_extension == 'pdf':
+                    try:
+                        pdf_reader = PyPDF2.PdfReader(uploaded_file)
+                        text_content = ""
+                        for page in pdf_reader.pages:
+                            text_content += page.extract_text() + "\n"
+                        st.text_area("Extracted Text", text_content, height=300, disabled=True)
+                    except Exception as e:
+                        st.error(f"❌ Error reading PDF: {str(e)}")
+                        return
                 
-                # Document analysis placeholder
+                elif file_extension in ['docx', 'doc']:
+                    try:
+                        doc = docx.Document(uploaded_file)
+                        text_content = ""
+                        for paragraph in doc.paragraphs:
+                            text_content += paragraph.text + "\n"
+                        st.text_area("Extracted Text", text_content, height=300, disabled=True)
+                    except Exception as e:
+                        st.error(f"❌ Error reading Word document: {str(e)}")
+                        return
+                
+                elif file_extension == 'txt':
+                    try:
+                        text_content = uploaded_file.read().decode('utf-8')
+                        st.text_area("Extracted Text", text_content, height=300, disabled=True)
+                    except Exception as e:
+                        st.error(f"❌ Error reading text file: {str(e)}")
+                        return
+                
+                # Document analysis
                 st.markdown('<h2 class="sub-header">📊 Document Analysis</h2>', unsafe_allow_html=True)
                 st.info("""
                 **Document Analysis Features:**
@@ -435,58 +387,110 @@ def main():
                 st.metric("Character Count", len(text_content))
             
             else:
-                st.error("Failed to process uploaded file.")
+                st.error(f"❌ Unsupported file type: {file_extension}")
+                st.info("💡 Supported formats: JPG, PNG (images) | PDF, DOCX, DOC, TXT (documents)")
+                return
     
     with col2:
-        if uploaded_file is not None and file_type == 'image':
+        if uploaded_file is not None and file_extension in ['jpg', 'jpeg', 'png']:
             st.markdown('<h2 class="sub-header">🔬 Model Explainability</h2>', unsafe_allow_html=True)
             
-            # Generate Grad-CAM
+            # Generate Grad-CAM for top prediction
             with st.spinner("Generating Grad-CAM visualization..."):
-                heatmap, overlay = create_gradcam_visualization(model, image, prediction)
-            
-            if heatmap is not None and overlay is not None:
-                # Create visualization
-                fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+                try:
+                    # Save temporary image
+                    temp_path = "temp_image.jpg"
+                    image.save(temp_path)
+                    
+                    # Generate Grad-CAM for top prediction
+                    top_class_idx = DISEASE_LABELS.index(predictions[0]['disease'])
+                    heatmap, overlay = generate_gradcam_for_single_image(
+                        model, temp_path, top_class_idx, save_path=None
+                    )
+                    
+                    # Clean up
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                    
+                    # Create visualization
+                    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+                    
+                    # Original image
+                    axes[0].imshow(image)
+                    axes[0].set_title('Original Image')
+                    axes[0].axis('off')
+                    
+                    # Heatmap
+                    axes[1].imshow(heatmap, cmap='jet')
+                    axes[1].set_title(f'Grad-CAM ({predictions[0]["display_name"]})')
+                    axes[1].axis('off')
+                    
+                    # Overlay
+                    axes[2].imshow(overlay)
+                    axes[2].set_title('Attention Overlay')
+                    axes[2].axis('off')
+                    
+                    plt.tight_layout()
+                    
+                    # Display in Streamlit
+                    st.pyplot(fig)
+                    
+                    st.markdown("### 📊 What is Grad-CAM?")
+                    st.markdown("""
+                    **Grad-CAM (Gradient-weighted Class Activation Mapping)** shows which regions of the X-ray image 
+                    the model focuses on when making its prediction. The red areas indicate regions of high attention.
+                    
+                    - **Red areas**: Regions the model considers important for the diagnosis
+                    - **Blue areas**: Regions with lower attention
+                    - **Overlay**: Shows how the attention map aligns with the original image
+                    """)
+                    
+                    # Option to generate Grad-CAM for all classes
+                    if st.button("🔍 Generate Grad-CAM for All Diseases"):
+                        with st.spinner("Generating multi-class Grad-CAM..."):
+                            try:
+                                results = generate_multi_class_gradcam(model, temp_path, save_dir="temp_gradcam")
+                                
+                                # Display results in a grid
+                                n_results = len(results)
+                                cols = 2
+                                rows = (n_results + 1) // cols
+                                
+                                fig, axes = plt.subplots(rows, cols, figsize=(15, 5*rows))
+                                axes = axes.flatten()
+                                
+                                # Original image
+                                axes[0].imshow(image)
+                                axes[0].set_title('Original Image')
+                                axes[0].axis('off')
+                                
+                                # Disease CAMs
+                                for i, (class_idx, result) in enumerate(results.items()):
+                                    if i + 1 < len(axes):
+                                        axes[i + 1].imshow(result['overlay'])
+                                        axes[i + 1].set_title(f'{result["disease_name"]}')
+                                        axes[i + 1].axis('off')
+                                
+                                # Hide unused subplots
+                                for i in range(len(results) + 1, len(axes)):
+                                    axes[i].axis('off')
+                                
+                                plt.tight_layout()
+                                st.pyplot(fig)
+                                
+                            except Exception as e:
+                                st.error(f"Error generating multi-class Grad-CAM: {e}")
                 
-                # Original image
-                axes[0].imshow(image)
-                axes[0].set_title('Original Image')
-                axes[0].axis('off')
-                
-                # Heatmap
-                axes[1].imshow(heatmap, cmap='jet')
-                axes[1].set_title('Grad-CAM Heatmap')
-                axes[1].axis('off')
-                
-                # Overlay
-                axes[2].imshow(overlay)
-                axes[2].set_title('Attention Overlay')
-                axes[2].axis('off')
-                
-                plt.tight_layout()
-                
-                # Display in Streamlit
-                st.pyplot(fig)
-                
-                st.markdown("### 📊 What is Grad-CAM?")
-                st.markdown("""
-                **Grad-CAM (Gradient-weighted Class Activation Mapping)** shows which regions of the X-ray image 
-                the model focuses on when making its prediction. The red areas indicate regions of high attention.
-                
-                - **Red areas**: Regions the model considers important for the diagnosis
-                - **Blue areas**: Regions with lower attention
-                - **Overlay**: Shows how the attention map aligns with the original image
-                """)
-            else:
-                st.warning("⚠️ Grad-CAM visualization not available for this model.")
-                st.info("""
-                **Model Explainability:**
-                - The model has analyzed your X-ray image
-                - Prediction and confidence scores are shown above
-                - For full Grad-CAM visualization, use a trained ResNet model
-                """)
-        elif uploaded_file is not None and file_type == 'document':
+                except Exception as e:
+                    st.error(f"Error generating Grad-CAM: {e}")
+                    st.info("""
+                    **Model Explainability:**
+                    - The model has analyzed your X-ray image
+                    - Prediction and confidence scores are shown above
+                    - For full Grad-CAM visualization, ensure model compatibility
+                    """)
+        
+        elif uploaded_file is not None and file_extension in ['pdf', 'docx', 'doc', 'txt']:
             st.markdown('<h2 class="sub-header">📄 Document Analysis</h2>', unsafe_allow_html=True)
             st.info("""
             **Document Processing Complete:**
@@ -494,21 +498,23 @@ def main():
             - 📋 Content displayed in the left panel
             - 📊 Basic statistics calculated
             """)
+        
         else:
             st.markdown("### 📊 Model Explainability")
             st.markdown("""
             Once you upload an image, you'll see:
             
+            - **Multi-Class Predictions**: Top 3 disease predictions with confidence
             - **Grad-CAM Heatmap**: Shows which regions the model focuses on
             - **Attention Overlay**: Combines the heatmap with the original image
-            - **Explanation**: Helps understand the model's decision-making process
+            - **All Disease Probabilities**: Radar chart showing all disease scores
             """)
     
     # Footer
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #666; font-size: 0.9rem;">
-        <p>Medical Diagnosis Assistant | Built with PyTorch & Streamlit</p>
+        <p>Multi-Class Medical Diagnosis Assistant | Built with PyTorch & Streamlit</p>
         <p>For educational purposes only - Not for medical diagnosis</p>
     </div>
     """, unsafe_allow_html=True)

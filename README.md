@@ -81,7 +81,7 @@ python evaluate_multi_class.py \
 streamlit run app.py
 
 # Multi-class classification app
-streamlit run app_multi_class.py
+streamlit run app.py
 ```
 
 ## 📊 **Model Performance**
@@ -129,8 +129,8 @@ medical-diagnosis-assistant/
 │   ├── data_utils.py             # Data loading and preprocessing
 │   └── model_utils.py            # Model definitions and training
 ├── evaluation_results/            # Evaluation outputs
-├── app.py                        # Binary classification Streamlit app
-├── app_multi_class.py            # Multi-class Streamlit app
+├── app.py                        # Multi-class Streamlit app
+├── app_binary.py                 # Binary classification Streamlit app
 ├── train_multi_class.py          # Multi-class training script
 ├── evaluate_multi_class.py       # Comprehensive evaluation
 ├── gradcam.py                    # Model explainability
@@ -195,14 +195,14 @@ results = generate_multi_class_gradcam(model, "image.jpg", save_dir="gradcam_res
 
 ## 🎨 **Streamlit App Features**
 
-### **Multi-Class App (`app_multi_class.py`)**
+### **Multi-Class App (`app.py`)**
 - **Top 3 Predictions** with confidence scores
 - **Radar Chart** showing all disease probabilities
 - **Grad-CAM Visualizations** for model explainability
 - **Interactive Charts** using Plotly
 - **Document Processing** for medical reports
 
-### **Binary App (`app.py`)**
+### **Binary App (`app_binary.py`)**
 - **Normal vs Pneumonia** classification
 - **Confidence Bars** and prediction boxes
 - **Grad-CAM Overlays** for attention visualization
@@ -251,7 +251,7 @@ results = generate_multi_class_gradcam(model, "image.jpg", save_dir="gradcam_res
 pip install -r requirements.txt
 
 # Run Streamlit app
-streamlit run app_multi_class.py
+streamlit run app.py
 ```
 
 ### **Cloud Deployment**
