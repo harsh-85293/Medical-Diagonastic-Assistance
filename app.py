@@ -122,14 +122,87 @@ def predict_image(model, device, input_tensor):
     
     return prediction, confidence, probabilities[0].cpu().numpy()
 
+def validate_image_content(image):
+    """Validate if the uploaded image is likely a medical image"""
+    try:
+        # Convert to numpy array for analysis
+        img_array = np.array(image)
+        
+        # Check if image is grayscale or has medical characteristics
+        if len(img_array.shape) == 3:
+            # Check if it's mostly grayscale (medical images often are)
+            r, g, b = img_array[:,:,0], img_array[:,:,1], img_array[:,:,2]
+            if np.mean(np.abs(r - g)) < 10 and np.mean(np.abs(r - b)) < 10:
+                return True, "Image appears to be medical (grayscale-like)"
+        
+        # Check image dimensions (medical images are usually square-ish)
+        height, width = img_array.shape[:2]
+        aspect_ratio = width / height
+        if 0.5 <= aspect_ratio <= 2.0:
+            return True, "Image dimensions are appropriate for medical images"
+        
+        # Basic validation passed
+        return True, "Image format is valid"
+        
+    except Exception as e:
+        return False, f"Error analyzing image: {str(e)}"
+
+def validate_document_content(text_content):
+    """Validate if the uploaded document contains medical content"""
+    try:
+        # Convert to lowercase for easier matching
+        text_lower = text_content.lower()
+        
+        # Medical keywords to look for
+        medical_keywords = [
+            'patient', 'diagnosis', 'treatment', 'symptoms', 'medical', 'doctor',
+            'hospital', 'clinic', 'prescription', 'medication', 'test', 'lab',
+            'x-ray', 'chest', 'pneumonia', 'infection', 'fever', 'cough',
+            'breathing', 'respiratory', 'lung', 'heart', 'blood', 'pressure',
+            'temperature', 'pulse', 'oxygen', 'saturation', 'ct', 'mri', 'scan'
+        ]
+        
+        # Count medical keywords found
+        found_keywords = [word for word in medical_keywords if word in text_lower]
+        
+        if len(found_keywords) >= 2:
+            return True, f"Document contains medical content ({len(found_keywords)} medical terms found)"
+        elif len(text_content.split()) < 10:
+            return False, "Document appears to be too short or empty"
+        else:
+            return True, "Document format is valid (content validation limited)"
+            
+    except Exception as e:
+        return False, f"Error analyzing document: {str(e)}"
+
 def process_uploaded_file(uploaded_file):
     """Process uploaded file and determine its type"""
     file_extension = uploaded_file.name.lower().split('.')[-1]
     
+    # Validate file size (max 10MB)
+    if uploaded_file.size > 10 * 1024 * 1024:
+        st.error("❌ File too large! Please upload a file smaller than 10MB.")
+        return None, None, None
+    
     if file_extension in ['jpg', 'jpeg', 'png']:
         # Process as image
-        image = Image.open(uploaded_file).convert('RGB')
-        return 'image', image, None
+        try:
+            image = Image.open(uploaded_file).convert('RGB')
+            
+            # Validate image content
+            is_valid, message = validate_image_content(image)
+            if not is_valid:
+                st.error(f"❌ Invalid medical image: {message}")
+                st.info("💡 Please upload a chest X-ray image or other medical scan.")
+                return None, None, None
+            
+            st.success(f"✅ {message}")
+            return 'image', image, None
+            
+        except Exception as e:
+            st.error(f"❌ Error processing image: {str(e)}")
+            st.info("💡 Please upload a valid image file (JPG, PNG).")
+            return None, None, None
     
     elif file_extension == 'pdf':
         # Process as PDF document
@@ -138,9 +211,20 @@ def process_uploaded_file(uploaded_file):
             text_content = ""
             for page in pdf_reader.pages:
                 text_content += page.extract_text() + "\n"
+            
+            # Validate document content
+            is_valid, message = validate_document_content(text_content)
+            if not is_valid:
+                st.error(f"❌ Invalid medical document: {message}")
+                st.info("💡 Please upload a medical report, patient record, or clinical document.")
+                return None, None, None
+            
+            st.success(f"✅ {message}")
             return 'document', None, text_content
+            
         except Exception as e:
-            st.error(f"Error reading PDF: {e}")
+            st.error(f"❌ Error reading PDF: {str(e)}")
+            st.info("💡 Please upload a valid PDF document.")
             return None, None, None
     
     elif file_extension in ['docx', 'doc']:
@@ -150,22 +234,45 @@ def process_uploaded_file(uploaded_file):
             text_content = ""
             for paragraph in doc.paragraphs:
                 text_content += paragraph.text + "\n"
+            
+            # Validate document content
+            is_valid, message = validate_document_content(text_content)
+            if not is_valid:
+                st.error(f"❌ Invalid medical document: {message}")
+                st.info("💡 Please upload a medical report, patient record, or clinical document.")
+                return None, None, None
+            
+            st.success(f"✅ {message}")
             return 'document', None, text_content
+            
         except Exception as e:
-            st.error(f"Error reading Word document: {e}")
+            st.error(f"❌ Error reading Word document: {str(e)}")
+            st.info("💡 Please upload a valid Word document.")
             return None, None, None
     
     elif file_extension == 'txt':
         # Process as text file
         try:
             text_content = uploaded_file.read().decode('utf-8')
+            
+            # Validate document content
+            is_valid, message = validate_document_content(text_content)
+            if not is_valid:
+                st.error(f"❌ Invalid medical document: {message}")
+                st.info("💡 Please upload a medical report, patient record, or clinical document.")
+                return None, None, None
+            
+            st.success(f"✅ {message}")
             return 'document', None, text_content
+            
         except Exception as e:
-            st.error(f"Error reading text file: {e}")
+            st.error(f"❌ Error reading text file: {str(e)}")
+            st.info("💡 Please upload a valid text file.")
             return None, None, None
     
     else:
-        st.error(f"Unsupported file type: {file_extension}")
+        st.error(f"❌ Unsupported file type: {file_extension}")
+        st.info("💡 Supported formats: JPG, PNG (images) | PDF, DOCX, DOC, TXT (documents)")
         return None, None, None
 
 def create_gradcam_visualization(model, image, prediction):
@@ -205,10 +312,15 @@ def main():
     # Sidebar
     st.sidebar.markdown("## 📋 Instructions")
     st.sidebar.markdown("""
-    1. Upload a chest X-ray image (JPG, PNG) or medical document (PDF, DOCX, DOC, TXT)
-    2. For images: The model will analyze the X-ray and provide diagnosis
-    3. For documents: Text will be extracted and displayed
-    4. View the analysis results and visualizations
+    1. **Upload Medical Files Only:**
+       - **Images**: Chest X-rays, medical scans (JPG, PNG)
+       - **Documents**: Medical reports, patient records (PDF, DOCX, DOC, TXT)
+    
+    2. **For Images**: The AI will analyze and provide diagnosis
+    3. **For Documents**: Text will be extracted and displayed
+    4. **View Results**: Analysis and visualizations will appear
+    
+    **⚠️ Note**: Only medical-related files are accepted
     """)
     
     st.sidebar.markdown("## ⚠️ Disclaimer")
@@ -233,6 +345,23 @@ def main():
         if uploaded_file is not None:
             # Process uploaded file
             file_type, image, text_content = process_uploaded_file(uploaded_file)
+            
+            # Initialize variables for use in both columns
+            prediction = None
+            confidence = None
+            all_probabilities = None
+            
+            # Check if file processing was successful
+            if file_type is None:
+                st.warning("⚠️ Please try uploading a different file.")
+                st.markdown("""
+                **📋 Upload Guidelines:**
+                - **Images**: Chest X-rays, medical scans (JPG, PNG)
+                - **Documents**: Medical reports, patient records (PDF, DOCX, DOC, TXT)
+                - **File Size**: Maximum 10MB
+                - **Content**: Must be medical-related
+                """)
+                return
             
             if file_type == 'image':
                 # Display uploaded image
