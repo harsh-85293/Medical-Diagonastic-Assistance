@@ -13,6 +13,8 @@ from PIL import Image
 import io
 import os
 import cv2
+import PyPDF2
+import docx
 from utils.data_utils import get_transforms, get_device, load_checkpoint
 from utils.model_utils import ChestXRayModel
 from gradcam import GradCAM, generate_gradcam_for_single_image
@@ -120,6 +122,52 @@ def predict_image(model, device, input_tensor):
     
     return prediction, confidence, probabilities[0].cpu().numpy()
 
+def process_uploaded_file(uploaded_file):
+    """Process uploaded file and determine its type"""
+    file_extension = uploaded_file.name.lower().split('.')[-1]
+    
+    if file_extension in ['jpg', 'jpeg', 'png']:
+        # Process as image
+        image = Image.open(uploaded_file).convert('RGB')
+        return 'image', image, None
+    
+    elif file_extension == 'pdf':
+        # Process as PDF document
+        try:
+            pdf_reader = PyPDF2.PdfReader(uploaded_file)
+            text_content = ""
+            for page in pdf_reader.pages:
+                text_content += page.extract_text() + "\n"
+            return 'document', None, text_content
+        except Exception as e:
+            st.error(f"Error reading PDF: {e}")
+            return None, None, None
+    
+    elif file_extension in ['docx', 'doc']:
+        # Process as Word document
+        try:
+            doc = docx.Document(uploaded_file)
+            text_content = ""
+            for paragraph in doc.paragraphs:
+                text_content += paragraph.text + "\n"
+            return 'document', None, text_content
+        except Exception as e:
+            st.error(f"Error reading Word document: {e}")
+            return None, None, None
+    
+    elif file_extension == 'txt':
+        # Process as text file
+        try:
+            text_content = uploaded_file.read().decode('utf-8')
+            return 'document', None, text_content
+        except Exception as e:
+            st.error(f"Error reading text file: {e}")
+            return None, None, None
+    
+    else:
+        st.error(f"Unsupported file type: {file_extension}")
+        return None, None, None
+
 def create_gradcam_visualization(model, image, prediction):
     """Create Grad-CAM visualization"""
     try:
@@ -157,10 +205,10 @@ def main():
     # Sidebar
     st.sidebar.markdown("## 📋 Instructions")
     st.sidebar.markdown("""
-    1. Upload a chest X-ray image (JPG, PNG)
-    2. The model will analyze the image
-    3. View the prediction and confidence
-    4. Explore the Grad-CAM visualization
+    1. Upload a chest X-ray image (JPG, PNG) or medical document (PDF, DOCX, DOC, TXT)
+    2. For images: The model will analyze the X-ray and provide diagnosis
+    3. For documents: Text will be extracted and displayed
+    4. View the analysis results and visualizations
     """)
     
     st.sidebar.markdown("## ⚠️ Disclaimer")
@@ -177,56 +225,88 @@ def main():
         st.markdown('<h2 class="sub-header">📤 Upload X-Ray Image</h2>', unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader(
-            "Choose a chest X-ray image...",
-            type=['jpg', 'jpeg', 'png'],
-            help="Upload a chest X-ray image in JPG, JPEG, or PNG format"
+            "Choose a chest X-ray image or medical document...",
+            type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
+            help="Upload a chest X-ray image (JPG, PNG) or medical document (PDF, DOCX, DOC, TXT)"
         )
         
         if uploaded_file is not None:
-            # Display uploaded image
-            image = Image.open(uploaded_file).convert('RGB')
-            st.image(image, caption="Uploaded X-Ray Image", use_column_width=True)
+            # Process uploaded file
+            file_type, image, text_content = process_uploaded_file(uploaded_file)
             
-            # Preprocess image
-            input_tensor = preprocess_image(image)
-            
-            # Make prediction
-            prediction, confidence, all_probabilities = predict_image(model, device, input_tensor)
-            
-            # Display results
-            st.markdown('<h2 class="sub-header">🔍 Analysis Results</h2>', unsafe_allow_html=True)
-            
-            class_names = ['NORMAL', 'PNEUMONIA']
-            prediction_text = class_names[prediction]
-            
-            # Prediction box
-            if prediction == 0:  # NORMAL
-                st.markdown(f"""
-                <div class="prediction-box normal-prediction">
-                    <h3>✅ Prediction: {prediction_text}</h3>
-                    <p>Confidence: {confidence:.2%}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            else:  # PNEUMONIA
-                st.markdown(f"""
-                <div class="prediction-box pneumonia-prediction">
-                    <h3>⚠️ Prediction: {prediction_text}</h3>
-                    <p>Confidence: {confidence:.2%}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            # Confidence bars
-            st.markdown("### Confidence Breakdown")
-            for i, (class_name, prob) in enumerate(zip(class_names, all_probabilities)):
-                color_class = "normal-confidence" if i == 0 else "pneumonia-confidence"
-                st.markdown(f"""
-                <div>
-                    <strong>{class_name}:</strong> {prob:.2%}
-                    <div class="confidence-bar">
-                        <div class="confidence-fill {color_class}" style="width: {prob*100}%"></div>
+            if file_type == 'image':
+                # Display uploaded image
+                st.image(image, caption="Uploaded X-Ray Image", use_column_width=True)
+                
+                # Preprocess image
+                input_tensor = preprocess_image(image)
+                
+                # Make prediction
+                prediction, confidence, all_probabilities = predict_image(model, device, input_tensor)
+                
+                # Display results
+                st.markdown('<h2 class="sub-header">🔍 Analysis Results</h2>', unsafe_allow_html=True)
+                
+                class_names = ['NORMAL', 'PNEUMONIA']
+                prediction_text = class_names[prediction]
+                
+                # Prediction box
+                if prediction == 0:  # NORMAL
+                    st.markdown(f"""
+                    <div class="prediction-box normal-prediction">
+                        <h3>✅ Prediction: {prediction_text}</h3>
+                        <p>Confidence: {confidence:.2%}</p>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+                else:  # PNEUMONIA
+                    st.markdown(f"""
+                    <div class="prediction-box pneumonia-prediction">
+                        <h3>⚠️ Prediction: {prediction_text}</h3>
+                        <p>Confidence: {confidence:.2%}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Confidence bars
+                st.markdown("### Confidence Breakdown")
+                for i, (class_name, prob) in enumerate(zip(class_names, all_probabilities)):
+                    color_class = "normal-confidence" if i == 0 else "pneumonia-confidence"
+                    st.markdown(f"""
+                    <div>
+                        <strong>{class_name}:</strong> {prob:.2%}
+                        <div class="confidence-bar">
+                            <div class="confidence-fill {color_class}" style="width: {prob*100}%"></div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            elif file_type == 'document':
+                # Display document content
+                st.markdown('<h2 class="sub-header">📄 Document Content</h2>', unsafe_allow_html=True)
+                
+                # Show file info
+                st.info(f"📎 File: {uploaded_file.name}")
+                
+                # Display text content
+                st.markdown("### Document Text:")
+                st.text_area("Extracted Text", text_content, height=300, disabled=True)
+                
+                # Document analysis placeholder
+                st.markdown('<h2 class="sub-header">📊 Document Analysis</h2>', unsafe_allow_html=True)
+                st.info("""
+                **Document Analysis Features:**
+                - ✅ Text extraction completed
+                - 📋 Document content displayed
+                - 🔍 Medical terminology detection (coming soon)
+                - 📈 Report summarization (coming soon)
+                """)
+                
+                # Word count and basic stats
+                word_count = len(text_content.split())
+                st.metric("Word Count", word_count)
+                st.metric("Character Count", len(text_content))
+            
+            else:
+                st.error("Failed to process uploaded file.")
     
     with col2:
         if uploaded_file is not None:
