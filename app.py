@@ -470,6 +470,17 @@ def load_model():
             
             # Load checkpoint with detailed error handling
             try:
+                # Check if file exists and is readable
+                if not os.path.isfile(model_path):
+                    st.error(f"❌ Model file not found: {model_path}")
+                    return None, None
+                
+                # Check file size
+                file_size = os.path.getsize(model_path)
+                if file_size < 1000:  # Less than 1KB
+                    st.error(f"❌ Model file appears to be corrupted (size: {file_size} bytes)")
+                    return None, None
+                
                 checkpoint = torch.load(model_path, map_location=device)
                 st.info(f"Checkpoint loaded successfully. Type: {type(checkpoint)}")
                 
@@ -501,9 +512,10 @@ def load_model():
                 
             except Exception as checkpoint_error:
                 st.error(f"❌ Error loading checkpoint: {checkpoint_error}")
-                st.error(f"Checkpoint type: {type(checkpoint)}")
-                if isinstance(checkpoint, dict):
-                    st.error(f"Available keys: {list(checkpoint.keys())}")
+                if 'checkpoint' in locals():
+                    st.error(f"Checkpoint type: {type(checkpoint)}")
+                    if isinstance(checkpoint, dict):
+                        st.error(f"Available keys: {list(checkpoint.keys())}")
                 return None, None
         else:
             st.warning(f"⚠️ Multi-class model not found at: {model_path}")
@@ -861,7 +873,7 @@ def main():
                         <h4 style="margin: 0 0 1rem 0; color: #2c3e50; font-size: 1.3rem;">📷 Uploaded X-Ray Image</h4>
                     </div>
                     """, unsafe_allow_html=True)
-                    st.image(image, use_column_width=True)
+                    st.image(image, use_container_width=True)
                     
                     # Preprocess image and make prediction
                     with st.spinner("🔬 Analyzing image with AI..."):

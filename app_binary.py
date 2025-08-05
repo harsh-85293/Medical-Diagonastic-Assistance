@@ -365,7 +365,7 @@ def main():
             
             if file_type == 'image':
                 # Display uploaded image
-                st.image(image, caption="Uploaded X-Ray Image", use_column_width=True)
+                st.image(image, caption="Uploaded X-Ray Image", use_container_width=True)
                 
                 # Preprocess image
                 input_tensor = preprocess_image(image)
