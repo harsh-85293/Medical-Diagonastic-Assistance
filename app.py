@@ -1296,12 +1296,12 @@ def main():
             </div>
         </div>
         <h4 style="margin: 0 0 1rem 0; font-size: 1.3rem;">🏥 Medical AI Assistant</h4>
-        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem; line-height: 1.4;">
+        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem; line-height: 1.4; color: #ff4444;">
             Built with <strong>PyTorch</strong> & <strong>Streamlit</strong> | 
             For <strong>educational purposes only</strong> - Not for medical diagnosis
         </p>
         <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
-            <p style="margin: 0; opacity: 0.8; font-size: 0.85rem; line-height: 1.4;">
+            <p style="margin: 0; opacity: 0.8; font-size: 0.85rem; line-height: 1.4; color: #000000;">
                 <strong>⚠️ Disclaimer:</strong> This tool is designed for educational and research purposes. 
                 It should not be used for actual medical diagnosis. Always consult qualified healthcare professionals.
             </p>
