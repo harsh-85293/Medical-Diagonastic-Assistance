@@ -938,6 +938,11 @@ def main():
                         input_tensor = preprocess_image(image)
                         predictions, all_probabilities = predict_image(model, device, input_tensor)
                     
+                    # --- Fix UnboundLocalError: ensure predictions is always assigned and checked ---
+                    if not predictions:
+                        st.error('Prediction failed. Please try another image or check the model.')
+                        return
+
                     # Analysis Section Header
                     st.markdown("""
                     <div class="section-header analysis">
