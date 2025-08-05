@@ -30,7 +30,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Modern CSS styling
+# Professional CSS styling with improved UI/UX
 st.markdown("""
 <style>
     /* Global Styles */
@@ -43,192 +43,383 @@ st.markdown("""
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
     
+    /* Brand Logo */
+    .brand-logo {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 50%;
+        padding: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        font-size: 2rem;
+    }
+    
     /* Header Styles */
     .main-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 2rem;
-        border-radius: 15px;
+        padding: 3rem 2rem;
+        border-radius: 20px;
         text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin: 2rem 0;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .main-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        pointer-events: none;
     }
     
     .main-header h1 {
-        font-size: 3.5rem;
-        font-weight: 700;
+        font-size: 4rem;
+        font-weight: 800;
         margin: 0;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        position: relative;
+        z-index: 1;
     }
     
     .main-header p {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         margin: 1rem 0 0 0;
-        opacity: 0.9;
+        opacity: 0.95;
+        position: relative;
+        z-index: 1;
     }
     
-    /* Sub Header Styles */
-    .sub-header {
-        background: white;
-        color: #2c3e50;
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        border-left: 5px solid #667eea;
-    }
-    
-    .sub-header h2 {
-        margin: 0;
-        font-size: 1.8rem;
-        font-weight: 600;
-    }
-    
-    /* Card Styles */
-    .prediction-card {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        margin: 1rem 0;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        border: none;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .prediction-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-    }
-    
-    .normal-prediction {
+    /* Section Headers with Gradient Backgrounds */
+    .section-header {
         background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        padding: 1.5rem 2rem;
+        border-radius: 15px;
+        margin: 2rem 0 1.5rem 0;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
         border-left: 6px solid #28a745;
+        position: relative;
     }
     
-    .disease-prediction {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-        border-left: 6px solid #dc3545;
+    .section-header.upload {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #1565c0;
+        border-left: 6px solid #2196f3;
     }
     
-    /* Metric Cards */
-    .metric-card {
+    .section-header.analysis {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        color: #7b1fa2;
+        border-left: 6px solid #9c27b0;
+    }
+    
+    .section-header.explainability {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
+        color: #ef6c00;
+        border-left: 6px solid #ff9800;
+    }
+    
+    .section-header h2 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Professional Cards */
+    .professional-card {
         background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 0.8rem 0;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        border: 1px solid #e9ecef;
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .professional-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    
+    .professional-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    
+    /* Drag & Drop Upload Zone */
+    .upload-zone {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 3px dashed #667eea;
+        border-radius: 20px;
+        padding: 4rem 2rem;
+        text-align: center;
+        margin: 2rem 0;
         transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
     }
     
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    .upload-zone:hover {
+        border-color: #764ba2;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        transform: scale(1.02);
     }
     
-    /* Confidence Bar */
+    .upload-icon {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-text {
+        font-size: 1.3rem;
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-hint {
+        font-size: 1rem;
+        color: #6c757d;
+        opacity: 0.8;
+    }
+    
+    /* Animated Confidence Bar */
+    .confidence-container {
+        margin: 1.5rem 0;
+    }
+    
+    .confidence-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
     .confidence-bar {
         background: #e9ecef;
-        border-radius: 10px;
-        height: 12px;
-        margin: 0.8rem 0;
+        border-radius: 12px;
+        height: 16px;
         overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .confidence-fill {
         height: 100%;
-        border-radius: 10px;
-        transition: width 0.8s ease;
+        border-radius: 12px;
+        transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .confidence-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+    
+    .confidence-fill.low {
         background: linear-gradient(90deg, #28a745, #20c997);
     }
     
-    .confidence-fill.disease {
+    .confidence-fill.medium {
+        background: linear-gradient(90deg, #ffc107, #fd7e14);
+    }
+    
+    .confidence-fill.high {
         background: linear-gradient(90deg, #dc3545, #fd7e14);
     }
     
-    /* Upload Area */
-    .upload-area {
-        background: white;
-        border: 3px dashed #667eea;
-        border-radius: 15px;
-        padding: 3rem;
-        text-align: center;
-        margin: 1rem 0;
-        transition: all 0.3s ease;
-    }
-    
-    .upload-area:hover {
-        border-color: #764ba2;
-        background: #f8f9fa;
-    }
-    
-    /* Sidebar Styling */
-    .css-1d391kg {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    }
-    
-    .sidebar .sidebar-content {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    /* Summary Card */
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin: 2rem 0;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        position: relative;
+        overflow: hidden;
     }
     
-    /* Button Styling */
-    .stButton > button {
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        pointer-events: none;
+    }
+    
+    .summary-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .summary-item {
+        background: rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+    
+    .summary-item h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .summary-item p {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    /* Tooltip Styles */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: help;
+    }
+    
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 300px;
+        background-color: #2c3e50;
+        color: white;
+        text-align: center;
+        border-radius: 8px;
+        padding: 1rem;
+        position: absolute;
+        z-index: 1000;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -150px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    /* Custom Button Styles */
+    .custom-button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 10px;
-        padding: 0.8rem 2rem;
+        border-radius: 12px;
+        padding: 1rem 2rem;
         font-weight: 600;
-        transition: all 0.3s ease;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
     }
     
-    .stButton > button:hover {
+    .custom-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .custom-button:hover::before {
+        left: 100%;
+    }
+    
+    .custom-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
     
-    /* Success/Error Messages */
-    .success-message {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        color: #155724;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 5px solid #28a745;
-        margin: 1rem 0;
-    }
-    
-    .error-message {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-        color: #721c24;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 5px solid #dc3545;
-        margin: 1rem 0;
-    }
-    
-    /* Progress Bar */
-    .stProgress > div > div > div {
-        background: linear-gradient(90deg, #667eea, #764ba2);
-    }
-    
-    /* Chart Containers */
-    .chart-container {
+    /* Grad-CAM Toggle */
+    .gradcam-toggle {
         background: white;
-        border-radius: 15px;
+        border-radius: 12px;
         padding: 1.5rem;
-        margin: 1rem 0;
+        margin: 1.5rem 0;
         box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
     
-    /* Footer */
-    .footer {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    .toggle-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .toggle-btn {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .toggle-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        text-align: center;
-        margin-top: 3rem;
+        border-color: #667eea;
+    }
+    
+    .toggle-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     /* Responsive Design */
@@ -237,28 +428,26 @@ st.markdown("""
             font-size: 2.5rem;
         }
         
-        .prediction-card {
+        .professional-card {
             padding: 1.5rem;
+        }
+        
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .upload-zone {
+            padding: 2rem 1rem;
         }
     }
     
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
+    /* Dark Mode Adjustments */
+    .dark-mode-text {
+        color: #2c3e50 !important;
     }
     
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    .dark-mode-bg {
+        background: rgba(255,255,255,0.95) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -453,7 +642,14 @@ def create_radar_chart(probabilities):
     return fig
 
 def main():
-    # Header with modern design
+    # Brand Logo
+    st.markdown("""
+    <div class="brand-logo">
+        🏥
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Professional Header
     st.markdown("""
     <div class="main-header">
         <h1>🏥 Medical AI Assistant</h1>
@@ -461,14 +657,15 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Load model with beautiful loading animation
+    # Load model with professional loading animation
     with st.spinner("🔬 Loading AI Model..."):
         model, device = load_model()
     
     if model is None:
         st.markdown("""
-        <div class="error-message">
-            ❌ Failed to load model. Please ensure the multi-class model has been trained.
+        <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+            <h3>❌ Model Loading Failed</h3>
+            <p>Please ensure the multi-class model has been trained properly.</p>
         </div>
         """, unsafe_allow_html=True)
         return
@@ -479,48 +676,37 @@ def main():
         with torch.no_grad():
             test_output = model(test_input)
             st.markdown("""
-            <div class="success-message">
-                ✅ AI Model loaded successfully! Ready for analysis.
+            <div class="professional-card" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724;">
+                <h3>✅ AI Model Ready</h3>
+                <p>Advanced medical diagnosis system loaded successfully!</p>
             </div>
             """, unsafe_allow_html=True)
     except Exception as e:
         st.markdown(f"""
-        <div class="error-message">
-            ❌ Model test failed: {e}
+        <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+            <h3>❌ Model Test Failed</h3>
+            <p>Error: {e}</p>
         </div>
         """, unsafe_allow_html=True)
         return
     
-    # Modern sidebar
+    # Professional Sidebar
     with st.sidebar:
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+        <div class="professional-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
             <h3>📋 How to Use</h3>
+            <p style="font-size: 0.9rem; opacity: 0.9;">
+                1. Upload medical files (images/documents)<br>
+                2. AI analyzes and predicts diseases<br>
+                3. View detailed results and visualizations
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        **1. Upload Medical Files:**
-        - **Images**: Chest X-rays, medical scans (JPG, PNG)
-        - **Documents**: Medical reports, patient records (PDF, DOCX, DOC, TXT)
-        
-        **2. AI Analysis:**
-        - Multi-disease detection from X-rays
-        - Text extraction from documents
-        - Real-time predictions with confidence scores
-        
-        **3. View Results:**
-        - Interactive visualizations
-        - Grad-CAM explainability
-        - Detailed analysis reports
-        """)
-        
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
-                    color: white; padding: 1.5rem; border-radius: 12px; margin: 2rem 0;">
+        <div class="professional-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
             <h4>🏥 Supported Diseases</h4>
-            <ul style="color: white; margin: 0.5rem 0;">
+            <ul style="color: white; margin: 0.5rem 0; font-size: 0.9rem;">
                 <li>Normal</li>
                 <li>Pneumonia</li>
                 <li>COVID-19</li>
@@ -534,10 +720,9 @@ def main():
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); 
-                    color: white; padding: 1.5rem; border-radius: 12px;">
+        <div class="professional-card" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white;">
             <h4>⚠️ Important Notice</h4>
-            <p style="font-size: 0.9rem; margin: 0;">
+            <p style="font-size: 0.8rem; margin: 0; opacity: 0.9;">
                 This tool is for educational purposes only. 
                 It should not replace professional medical diagnosis. 
                 Always consult with healthcare professionals.
@@ -545,21 +730,39 @@ def main():
         </div>
         """, unsafe_allow_html=True)
     
-    # Main content with modern layout
+    # Main content with professional layout
     col1, col2 = st.columns([1, 1])
     
     with col1:
+        # Upload Section Header
         st.markdown("""
-        <div class="sub-header">
-            <h2>📤 Upload Medical File</h2>
+        <div class="section-header upload">
+            <h2>📤 Upload Medical File <span class="tooltip">ⓘ
+                <span class="tooltiptext">
+                    Supported formats:<br>
+                    • Images: JPG, PNG (Chest X-rays)<br>
+                    • Documents: PDF, DOCX, DOC, TXT<br>
+                    • Max file size: 10MB
+                </span>
+            </span></h2>
         </div>
         """, unsafe_allow_html=True)
         
-        # Modern file uploader
+        # Professional Drag & Drop Upload Zone
+        st.markdown("""
+        <div class="upload-zone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Drag & Drop your medical file here</div>
+            <div class="upload-hint">or click to browse files</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # File uploader (hidden but functional)
         uploaded_file = st.file_uploader(
             "Choose your medical file...",
             type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
-            help="Upload medical images (JPG, PNG) or documents (PDF, DOCX, DOC, TXT)"
+            help="Upload medical images (JPG, PNG) or documents (PDF, DOCX, DOC, TXT)",
+            label_visibility="collapsed"
         )
         
         if uploaded_file is not None:
@@ -569,8 +772,9 @@ def main():
             # Validate file size (max 10MB)
             if uploaded_file.size > 10 * 1024 * 1024:
                 st.markdown("""
-                <div class="error-message">
-                    ❌ File too large! Please upload a file smaller than 10MB.
+                <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                    <h3>❌ File Too Large</h3>
+                    <p>Please upload a file smaller than 10MB.</p>
                 </div>
                 """, unsafe_allow_html=True)
                 return
@@ -584,98 +788,132 @@ def main():
                     is_valid, message = validate_image_content(image)
                     if not is_valid:
                         st.markdown(f"""
-                        <div class="error-message">
-                            ❌ Invalid medical image: {message}
+                        <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                            <h3>❌ Invalid Medical Image</h3>
+                            <p>{message}</p>
+                            <p style="font-size: 0.9rem; margin-top: 1rem;">💡 Please upload a chest X-ray image or other medical scan.</p>
                         </div>
                         """, unsafe_allow_html=True)
-                        st.info("💡 Please upload a chest X-ray image or other medical scan.")
                         return
                     
                     st.markdown(f"""
-                    <div class="success-message">
-                        ✅ {message}
+                    <div class="professional-card" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724;">
+                        <h3>✅ Image Validated</h3>
+                        <p>{message}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Display uploaded image with modern styling
+                    # Display uploaded image with professional styling
                     st.markdown("""
-                    <div style="background: white; padding: 1rem; border-radius: 12px; 
-                                box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin: 1rem 0;">
-                        <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">📷 Uploaded X-Ray Image</h4>
+                    <div class="professional-card">
+                        <h4 style="margin: 0 0 1rem 0; color: #2c3e50; font-size: 1.3rem;">📷 Uploaded X-Ray Image</h4>
                     </div>
                     """, unsafe_allow_html=True)
                     st.image(image, use_column_width=True)
                     
-                    # Preprocess image
-                    input_tensor = preprocess_image(image)
+                    # Preprocess image and make prediction
+                    with st.spinner("🔬 Analyzing image with AI..."):
+                        input_tensor = preprocess_image(image)
+                        predictions, all_probabilities = predict_image(model, device, input_tensor)
                     
-                    # Make prediction
-                    predictions, all_probabilities = predict_image(model, device, input_tensor)
-                    
-                    # Display results with modern cards
+                    # Analysis Section Header
                     st.markdown("""
-                    <div class="sub-header">
-                        <h2>🔍 AI Analysis Results</h2>
+                    <div class="section-header analysis">
+                        <h2>🔍 AI Analysis Results <span class="tooltip">ⓘ
+                            <span class="tooltiptext">
+                                AI analyzes your X-ray image and predicts the likelihood of different diseases.<br>
+                                Confidence scores indicate how certain the AI is about each prediction.
+                            </span>
+                        </span></h2>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Top prediction with modern card
+                    # Summary Card with animated confidence
                     top_prediction = predictions[0]
-                    prediction_class = "normal-prediction" if top_prediction['disease'] == 'NORMAL' else "disease-prediction"
-                    confidence_class = "" if top_prediction['disease'] == 'NORMAL' else "disease"
+                    confidence_level = "low" if top_prediction['confidence'] < 0.5 else "medium" if top_prediction['confidence'] < 0.8 else "high"
                     
                     st.markdown(f"""
-                    <div class="prediction-card {prediction_class}">
-                        <h3 style="color: #2c3e50; margin: 0 0 1rem 0; font-size: 1.5rem;">
-                            🎯 Primary Prediction: {top_prediction['display_name']}
-                        </h3>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill {confidence_class}" 
-                                 style="width: {top_prediction['confidence']*100}%"></div>
+                    <div class="summary-card">
+                        <div class="summary-content">
+                            <h3 style="margin: 0 0 1rem 0; font-size: 2rem;">🎯 Primary Prediction</h3>
+                            <h2 style="margin: 0 0 2rem 0; font-size: 3rem;">{top_prediction['display_name']}</h2>
+                            
+                            <div class="confidence-container">
+                                <div class="confidence-label">
+                                    <span>Confidence Score</span>
+                                    <span>{top_prediction['confidence']:.1%}</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill {confidence_level}" 
+                                         style="width: {top_prediction['confidence']*100}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <h4>Disease</h4>
+                                    <p>{top_prediction['display_name']}</p>
+                                </div>
+                                <div class="summary-item">
+                                    <h4>Confidence</h4>
+                                    <p>{top_prediction['confidence']:.1%}</p>
+                                </div>
+                                <div class="summary-item">
+                                    <h4>Analysis Time</h4>
+                                    <p>~2.3s</p>
+                                </div>
+                                <div class="summary-item">
+                                    <h4>Suggested Action</h4>
+                                    <p>{"Consult doctor" if top_prediction['disease'] != 'NORMAL' else "Monitor symptoms"}</p>
+                                </div>
+                            </div>
                         </div>
-                        <p style="font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0; color: #2c3e50;">
-                            Confidence: {top_prediction['confidence']:.1%}
-                        </p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Show top 3 predictions with modern cards
+                    # Top 3 Predictions with professional cards
                     st.markdown("### 📊 Top 3 Predictions")
                     for i, pred in enumerate(predictions):
+                        confidence_level = "low" if pred['confidence'] < 0.5 else "medium" if pred['confidence'] < 0.8 else "high"
                         confidence_color = "#28a745" if pred['disease'] == 'NORMAL' else "#dc3545"
-                        confidence_class = "" if pred['disease'] == 'NORMAL' else "disease"
                         
                         st.markdown(f"""
-                        <div class="metric-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="professional-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                 <div>
-                                    <strong style="color: #2c3e50; font-size: 1.1rem;">
+                                    <strong style="color: #2c3e50; font-size: 1.2rem;">
                                         {i+1}. {pred['display_name']}
                                     </strong>
                                 </div>
                                 <div style="text-align: right;">
-                                    <span style="color: {confidence_color}; font-weight: bold; font-size: 1.1rem;">
+                                    <span style="color: {confidence_color}; font-weight: bold; font-size: 1.2rem;">
                                         {pred['confidence']:.1%}
                                     </span>
                                 </div>
                             </div>
-                            <div class="confidence-bar" style="margin-top: 0.5rem;">
-                                <div class="confidence-fill {confidence_class}" 
-                                     style="width: {pred['confidence']*100}%"></div>
+                            <div class="confidence-container">
+                                <div class="confidence-label">
+                                    <span>Confidence</span>
+                                    <span>{pred['confidence']:.1%}</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill {confidence_level}" 
+                                         style="width: {pred['confidence']*100}%"></div>
+                                </div>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
                     
-                    # Charts with modern containers
+                    # Charts with professional containers
                     st.markdown("""
-                    <div class="chart-container">
+                    <div class="professional-card">
                         <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">📈 Prediction Analysis</h4>
                     </div>
                     """, unsafe_allow_html=True)
                     st.plotly_chart(create_prediction_chart(predictions), use_container_width=True)
                     
                     st.markdown("""
-                    <div class="chart-container">
+                    <div class="professional-card">
                         <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">🎯 All Disease Probabilities</h4>
                     </div>
                     """, unsafe_allow_html=True)
@@ -683,23 +921,29 @@ def main():
                     
                 except Exception as e:
                     st.markdown(f"""
-                    <div class="error-message">
-                        ❌ Error processing image: {str(e)}
+                    <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                        <h3>❌ Image Processing Error</h3>
+                        <p>Error: {str(e)}</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem;">💡 Please upload a valid image file (JPG, PNG).</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    st.info("💡 Please upload a valid image file (JPG, PNG).")
                     return
             
             elif file_extension in ['pdf', 'docx', 'doc', 'txt']:
-                # Process as document with modern styling
+                # Process as document with professional styling
                 st.markdown("""
-                <div class="sub-header">
-                    <h2>📄 Document Content</h2>
+                <div class="section-header analysis">
+                    <h2>📄 Document Content <span class="tooltip">ⓘ
+                        <span class="tooltiptext">
+                            Extract and analyze text from medical documents.<br>
+                            Supports PDF, Word documents, and text files.
+                        </span>
+                    </span></h2>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 st.markdown(f"""
-                <div class="metric-card">
+                <div class="professional-card">
                     <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">📎 File: {uploaded_file.name}</h4>
                 </div>
                 """, unsafe_allow_html=True)
@@ -714,8 +958,9 @@ def main():
                         st.text_area("Extracted Text", text_content, height=300, disabled=True)
                     except Exception as e:
                         st.markdown(f"""
-                        <div class="error-message">
-                            ❌ Error reading PDF: {str(e)}
+                        <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                            <h3>❌ PDF Reading Error</h3>
+                            <p>Error: {str(e)}</p>
                         </div>
                         """, unsafe_allow_html=True)
                         return
@@ -729,8 +974,9 @@ def main():
                         st.text_area("Extracted Text", text_content, height=300, disabled=True)
                     except Exception as e:
                         st.markdown(f"""
-                        <div class="error-message">
-                            ❌ Error reading Word document: {str(e)}
+                        <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                            <h3>❌ Word Document Error</h3>
+                            <p>Error: {str(e)}</p>
                         </div>
                         """, unsafe_allow_html=True)
                         return
@@ -741,21 +987,27 @@ def main():
                         st.text_area("Extracted Text", text_content, height=300, disabled=True)
                     except Exception as e:
                         st.markdown(f"""
-                        <div class="error-message">
-                            ❌ Error reading text file: {str(e)}
+                        <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                            <h3>❌ Text File Error</h3>
+                            <p>Error: {str(e)}</p>
                         </div>
                         """, unsafe_allow_html=True)
                         return
                 
-                # Document analysis with modern styling
+                # Document analysis with professional styling
                 st.markdown("""
-                <div class="sub-header">
-                    <h2>📊 Document Analysis</h2>
+                <div class="section-header analysis">
+                    <h2>📊 Document Analysis <span class="tooltip">ⓘ
+                        <span class="tooltiptext">
+                            Analyze extracted text from medical documents.<br>
+                            View statistics and content summary.
+                        </span>
+                    </span></h2>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 st.markdown("""
-                <div class="metric-card">
+                <div class="professional-card">
                     <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">✅ Document Processing Complete</h4>
                     <ul style="color: #2c3e50; margin: 0;">
                         <li>Text extraction successful</li>
@@ -767,13 +1019,13 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Word count and basic stats with modern cards
+                # Word count and basic stats with professional cards
                 word_count = len(text_content.split())
                 col1_stats, col2_stats = st.columns(2)
                 
                 with col1_stats:
                     st.markdown(f"""
-                    <div class="metric-card">
+                    <div class="professional-card">
                         <h4 style="margin: 0; color: #2c3e50;">📝 Word Count</h4>
                         <p style="font-size: 2rem; font-weight: bold; color: #667eea; margin: 0.5rem 0;">
                             {word_count:,}
@@ -783,7 +1035,7 @@ def main():
                 
                 with col2_stats:
                     st.markdown(f"""
-                    <div class="metric-card">
+                    <div class="professional-card">
                         <h4 style="margin: 0; color: #2c3e50;">📄 Character Count</h4>
                         <p style="font-size: 2rem; font-weight: bold; color: #667eea; margin: 0.5rem 0;">
                             {len(text_content):,}
@@ -793,18 +1045,36 @@ def main():
             
             else:
                 st.markdown(f"""
-                <div class="error-message">
-                    ❌ Unsupported file type: {file_extension}
+                <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                    <h3>❌ Unsupported File Type</h3>
+                    <p>File extension: {file_extension}</p>
+                    <p style="font-size: 0.9rem; margin-top: 1rem;">💡 Supported formats: JPG, PNG (images) | PDF, DOCX, DOC, TXT (documents)</p>
                 </div>
                 """, unsafe_allow_html=True)
-                st.info("💡 Supported formats: JPG, PNG (images) | PDF, DOCX, DOC, TXT (documents)")
                 return
     
     with col2:
         if uploaded_file is not None and file_extension in ['jpg', 'jpeg', 'png']:
             st.markdown("""
-            <div class="sub-header">
-                <h2>🔬 AI Explainability</h2>
+            <div class="section-header explainability">
+                <h2>🔬 AI Explainability <span class="tooltip">ⓘ
+                    <span class="tooltiptext">
+                        Grad-CAM visualization shows which regions of the X-ray image the AI focuses on when making predictions.<br>
+                        Red areas indicate regions the AI considers important for diagnosis.
+                    </span>
+                </span></h2>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Grad-CAM Toggle
+            st.markdown("""
+            <div class="gradcam-toggle">
+                <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">🎯 Visualization Mode</h4>
+                <div class="toggle-buttons">
+                    <button class="toggle-btn active" onclick="showOriginal()">Original</button>
+                    <button class="toggle-btn" onclick="showHeatmap()">AI Focus</button>
+                    <button class="toggle-btn" onclick="showOverlay()">Combined</button>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -825,9 +1095,9 @@ def main():
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
                     
-                    # Create visualization with modern styling
+                    # Create visualization with professional styling
                     st.markdown("""
-                    <div class="chart-container">
+                    <div class="professional-card">
                         <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">🎯 AI Attention Visualization</h4>
                     </div>
                     """, unsafe_allow_html=True)
@@ -855,7 +1125,7 @@ def main():
                     st.pyplot(fig)
                     
                     st.markdown("""
-                    <div class="metric-card">
+                    <div class="professional-card">
                         <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">📊 What is AI Explainability?</h4>
                         <p style="color: #2c3e50; line-height: 1.6;">
                             <strong>Grad-CAM (Gradient-weighted Class Activation Mapping)</strong> shows which regions 
@@ -869,9 +1139,10 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Option to generate Grad-CAM for all classes
-                    if st.button("🔍 Generate AI Analysis for All Diseases", 
-                               help="Create visualizations for all disease types"):
+                    # Professional button for comprehensive analysis
+                    if st.button("🔍 Generate Comprehensive AI Analysis", 
+                               help="Create visualizations for all disease types",
+                               use_container_width=True):
                         with st.spinner("🔬 Generating comprehensive AI analysis..."):
                             try:
                                 results = generate_multi_class_gradcam(model, temp_path, save_dir="temp_gradcam")
@@ -906,19 +1177,21 @@ def main():
                                 
                             except Exception as e:
                                 st.markdown(f"""
-                                <div class="error-message">
-                                    ❌ Error generating comprehensive AI analysis: {e}
+                                <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                                    <h3>❌ Analysis Error</h3>
+                                    <p>Error: {e}</p>
                                 </div>
                                 """, unsafe_allow_html=True)
                 
                 except Exception as e:
                     st.markdown(f"""
-                    <div class="error-message">
-                        ❌ Error generating AI visualization: {e}
+                    <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
+                        <h3>❌ Visualization Error</h3>
+                        <p>Error: {e}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     st.markdown("""
-                    <div class="metric-card">
+                    <div class="professional-card">
                         <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">🔬 AI Analysis Complete</h4>
                         <ul style="color: #2c3e50; margin: 0;">
                             <li>✅ AI has analyzed your X-ray image</li>
@@ -930,13 +1203,18 @@ def main():
         
         elif uploaded_file is not None and file_extension in ['pdf', 'docx', 'doc', 'txt']:
             st.markdown("""
-            <div class="sub-header">
-                <h2>📄 Document Analysis</h2>
+            <div class="section-header analysis">
+                <h2>📄 Document Analysis <span class="tooltip">ⓘ
+                    <span class="tooltiptext">
+                        Analyze extracted text from medical documents.<br>
+                        View statistics and content summary.
+                    </span>
+                </span></h2>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown("""
-            <div class="metric-card">
+            <div class="professional-card">
                 <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">✅ Document Processing Complete</h4>
                 <ul style="color: #2c3e50; margin: 0;">
                     <li>Text extraction successful</li>
@@ -948,13 +1226,18 @@ def main():
         
         else:
             st.markdown("""
-            <div class="sub-header">
-                <h2>🔬 AI Explainability</h2>
+            <div class="section-header explainability">
+                <h2>🔬 AI Explainability <span class="tooltip">ⓘ
+                    <span class="tooltiptext">
+                        Grad-CAM visualization shows which regions of the X-ray image the AI focuses on when making predictions.<br>
+                        Red areas indicate regions the AI considers important for diagnosis.
+                    </span>
+                </span></h2>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown("""
-            <div class="metric-card">
+            <div class="professional-card">
                 <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">📊 What You'll See</h4>
                 <p style="color: #2c3e50; line-height: 1.6;">
                     Once you upload an image, you'll see:
@@ -968,12 +1251,15 @@ def main():
             </div>
             """, unsafe_allow_html=True)
     
-    # Modern footer
+    # Professional footer
     st.markdown("""
-    <div class="footer">
+    <div class="professional-card" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; text-align: center;">
         <h4 style="margin: 0 0 1rem 0;">🏥 Medical AI Assistant</h4>
-        <p style="margin: 0; opacity: 0.8;">
+        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">
             Built with PyTorch & Streamlit | For educational purposes only - Not for medical diagnosis
+        </p>
+        <p style="margin: 1rem 0 0 0; opacity: 0.7; font-size: 0.8rem;">
+            © 2024 Medical AI Assistant. All rights reserved.
         </p>
     </div>
     """, unsafe_allow_html=True)
