@@ -454,41 +454,93 @@ st.markdown("""
 
 @st.cache_resource
 def load_model():
-    """Load the trained multi-class model"""
+    """Load the trained multi-class model with robust error handling"""
     try:
         device = get_device()
+        st.info(f"Loading model on device: {device}")
         
-        # Try to load the multi-class model
+        # Try to load the multi-class model first
         model_path = "models/multiclass_best_model.pth"
         if os.path.exists(model_path):
+            st.info(f"Found model file: {model_path}")
+            
+            # Create model
             model = create_model('resnet50', len(DISEASE_LABELS), pretrained=False)
             model = model.to(device)
             
-            # Load checkpoint
-            checkpoint = torch.load(model_path, map_location=device)
-            if isinstance(checkpoint, dict):
-                model.load_state_dict(checkpoint['model_state_dict'])
-            else:
-                model.load_state_dict(checkpoint)
-            
-            model.eval()
-            return model, device
+            # Load checkpoint with detailed error handling
+            try:
+                checkpoint = torch.load(model_path, map_location=device)
+                st.info(f"Checkpoint loaded successfully. Type: {type(checkpoint)}")
+                
+                # Handle different checkpoint formats
+                if isinstance(checkpoint, dict):
+                    st.info("Checkpoint is a dictionary. Available keys: " + str(list(checkpoint.keys())))
+                    
+                    # Try different possible keys for model state dict
+                    if 'model_state_dict' in checkpoint:
+                        st.info("Loading from 'model_state_dict' key")
+                        model.load_state_dict(checkpoint['model_state_dict'])
+                    elif 'state_dict' in checkpoint:
+                        st.info("Loading from 'state_dict' key")
+                        model.load_state_dict(checkpoint['state_dict'])
+                    elif 'model' in checkpoint:
+                        st.info("Loading from 'model' key")
+                        model.load_state_dict(checkpoint['model'])
+                    else:
+                        # Try to load the entire checkpoint as state dict
+                        st.info("Attempting to load entire checkpoint as state dict")
+                        model.load_state_dict(checkpoint)
+                else:
+                    st.info("Checkpoint is not a dictionary, loading directly as state dict")
+                    model.load_state_dict(checkpoint)
+                
+                model.eval()
+                st.success("✅ Multi-class model loaded successfully!")
+                return model, device
+                
+            except Exception as checkpoint_error:
+                st.error(f"❌ Error loading checkpoint: {checkpoint_error}")
+                st.error(f"Checkpoint type: {type(checkpoint)}")
+                if isinstance(checkpoint, dict):
+                    st.error(f"Available keys: {list(checkpoint.keys())}")
+                return None, None
         else:
-            # Fallback to binary demo model
-            demo_model_path = "models/chest_xray_demo.pth"
-            if os.path.exists(demo_model_path):
-                st.warning("Multi-class model not found. Using binary demo model instead.")
+            st.warning(f"⚠️ Multi-class model not found at: {model_path}")
+        
+        # Fallback to binary demo model
+        demo_model_path = "models/chest_xray_demo.pth"
+        if os.path.exists(demo_model_path):
+            st.warning("🔄 Using binary demo model as fallback")
+            try:
                 from create_demo_model import SimpleChestXRayModel
                 model = SimpleChestXRayModel(num_classes=2)
                 model.load_state_dict(torch.load(demo_model_path, map_location=device))
                 model = model.to(device)
                 model.eval()
+                st.success("✅ Binary demo model loaded successfully!")
                 return model, device
-            else:
-                st.error("No models found. Please train the model first.")
+            except Exception as demo_error:
+                st.error(f"❌ Error loading demo model: {demo_error}")
                 return None, None
+        else:
+            st.error("❌ No models found!")
+            st.error("📋 To create a working model, run one of these commands:")
+            st.code("""
+# For quick working multi-class model:
+python create_working_multiclass_model.py
+
+# For quick demo model:
+python create_demo_model.py
+
+# For training with real data:
+python train_advanced_model.py --data-format csv --data-path data/chest_xray.csv --epochs 10
+            """)
+            return None, None
+            
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"❌ Critical error in model loading: {e}")
+        st.error("Please check your model files and try again.")
         return None, None
 
 def preprocess_image(image):
