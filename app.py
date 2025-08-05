@@ -40,33 +40,43 @@ st.markdown("""
     }
     
     .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
-    /* Brand Logo */
+    /* Enhanced Brand Logo */
     .brand-logo {
         position: fixed;
         top: 20px;
         left: 20px;
         z-index: 1000;
-        background: rgba(255, 255, 255, 0.95);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 50%;
-        padding: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        font-size: 2rem;
+        padding: 15px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        font-size: 2.5rem;
+        color: white;
+        animation: pulse 2s infinite;
     }
     
-    /* Header Styles */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Enhanced Header Styles */
     .main-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 3rem 2rem;
-        border-radius: 20px;
+        padding: 4rem 2rem;
+        border-radius: 25px;
         text-align: center;
         margin: 2rem 0;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
         position: relative;
         overflow: hidden;
+        backdrop-filter: blur(10px);
     }
     
     .main-header::before {
@@ -81,92 +91,146 @@ st.markdown("""
     }
     
     .main-header h1 {
-        font-size: 4rem;
-        font-weight: 800;
+        font-size: 4.5rem;
+        font-weight: 900;
         margin: 0;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
         position: relative;
         z-index: 1;
+        letter-spacing: -1px;
     }
     
     .main-header p {
-        font-size: 1.4rem;
-        margin: 1rem 0 0 0;
+        font-size: 1.6rem;
+        margin: 1.5rem 0 0 0;
         opacity: 0.95;
         position: relative;
         z-index: 1;
+        font-weight: 300;
     }
     
-    /* Section Headers with Gradient Backgrounds */
+    /* Enhanced Section Headers */
     .section-header {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        color: #155724;
-        padding: 1.5rem 2rem;
-        border-radius: 15px;
-        margin: 2rem 0 1.5rem 0;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-        border-left: 6px solid #28a745;
-        position: relative;
-    }
-    
-    .section-header.upload {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        color: #1565c0;
-        border-left: 6px solid #2196f3;
-    }
-    
-    .section-header.analysis {
-        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-        color: #7b1fa2;
-        border-left: 6px solid #9c27b0;
-    }
-    
-    .section-header.explainability {
-        background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
-        color: #ef6c00;
-        border-left: 6px solid #ff9800;
-    }
-    
-    .section-header h2 {
-        margin: 0;
-        font-size: 2rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    /* Professional Cards */
-    .professional-card {
-        background: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
         border-radius: 20px;
-        padding: 2.5rem;
-        margin: 1.5rem 0;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        margin: 2rem 0 1.5rem 0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         position: relative;
         overflow: hidden;
     }
     
-    .professional-card::before {
+    .section-header::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea, #764ba2);
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        pointer-events: none;
+    }
+    
+    .section-header h2 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    /* Enhanced Professional Cards */
+    .professional-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
     }
     
     .professional-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.12);
     }
     
-
+    /* Enhanced Upload Area */
+    .upload-area {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 3px dashed #667eea;
+        border-radius: 25px;
+        padding: 3rem 2rem;
+        text-align: center;
+        margin: 2rem 0;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+    }
     
-    /* Animated Confidence Bar */
+    .upload-area:hover {
+        border-color: #764ba2;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        transform: scale(1.02);
+    }
+    
+    .upload-area:active {
+        transform: scale(0.98);
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover .upload-icon {
+        color: #764ba2;
+        transform: scale(1.1);
+    }
+    
+    .upload-text {
+        font-size: 1.5rem;
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-hint {
+        font-size: 1.1rem;
+        color: #6c757d;
+        opacity: 0.8;
+        margin-bottom: 1.5rem;
+    }
+    
+    .upload-info {
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .upload-info h4 {
+        color: #2c3e50;
+        margin: 0 0 1rem 0;
+        font-size: 1.2rem;
+    }
+    
+    .upload-info ul {
+        color: #6c757d;
+        margin: 0;
+        padding-left: 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    /* Enhanced Confidence Bar */
     .confidence-container {
         margin: 1.5rem 0;
     }
@@ -180,149 +244,47 @@ st.markdown("""
         color: #2c3e50;
     }
     
-    /* Override for summary card confidence labels */
-    .summary-card .confidence-label {
-        color: white !important;
-    }
-    
-    .summary-card .confidence-label span {
-        color: white !important;
-    }
-    
     .confidence-bar {
         background: #e9ecef;
-        border-radius: 12px;
-        height: 16px;
+        border-radius: 25px;
+        height: 12px;
         overflow: hidden;
         position: relative;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .confidence-fill {
         height: 100%;
-        border-radius: 12px;
-        transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 25px;
+        transition: width 1s ease;
         position: relative;
-        overflow: hidden;
-    }
-    
-    .confidence-fill::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        animation: shimmer 2s infinite;
-    }
-    
-    @keyframes shimmer {
-        0% { left: -100%; }
-        100% { left: 100%; }
-    }
-    
-    .confidence-fill.low {
-        background: linear-gradient(90deg, #28a745, #20c997);
-    }
-    
-    .confidence-fill.medium {
-        background: linear-gradient(90deg, #ffc107, #fd7e14);
     }
     
     .confidence-fill.high {
-        background: linear-gradient(90deg, #dc3545, #fd7e14);
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
     }
     
-    /* Summary Card */
-    .summary-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white !important;
-        border-radius: 20px;
-        padding: 2.5rem;
-        margin: 2rem 0;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-        position: relative;
-        overflow: hidden;
-        display: block;
+    .confidence-fill.medium {
+        background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);
     }
     
-    .summary-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
-        pointer-events: none;
+    .confidence-fill.low {
+        background: linear-gradient(90deg, #dc3545 0%, #e83e8c 100%);
     }
     
-    .summary-content {
-        position: relative;
-        z-index: 1;
-        color: white !important;
-    }
-    
-    .summary-content h2,
-    .summary-content h3,
-    .summary-content h4,
-    .summary-content p,
-    .summary-content span {
-        color: white !important;
-    }
-    
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin-top: 1.5rem;
-    }
-    
-    .summary-item {
-        background: rgba(255,255,255,0.1);
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-        backdrop-filter: blur(10px);
-    }
-    
-    .summary-item h4 {
-        margin: 0 0 0.5rem 0;
-        font-size: 0.9rem;
-        opacity: 0.9;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: white !important;
-    }
-    
-    .summary-item p {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: white !important;
-    }
-    
-    /* Ensure summary grid items in summary card have white text */
-    .summary-card .summary-item h4,
-    .summary-card .summary-item p {
-        color: white !important;
-    }
-    
-    /* Tooltip Styles */
+    /* Enhanced Tooltip */
     .tooltip {
         position: relative;
         display: inline-block;
         cursor: help;
     }
     
-    .tooltip .tooltiptext {
+    .tooltiptext {
         visibility: hidden;
         width: 300px;
-        background-color: #2c3e50;
+        background: rgba(0,0,0,0.9);
         color: white;
-        text-align: center;
-        border-radius: 8px;
+        text-align: left;
+        border-radius: 10px;
         padding: 1rem;
         position: absolute;
         z-index: 1000;
@@ -333,7 +295,6 @@ st.markdown("""
         transition: opacity 0.3s;
         font-size: 0.9rem;
         line-height: 1.4;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     }
     
     .tooltip:hover .tooltiptext {
@@ -341,130 +302,163 @@ st.markdown("""
         opacity: 1;
     }
     
-    /* Custom Button Styles */
-    .custom-button {
+    /* Enhanced Sidebar */
+    .sidebar .professional-card {
+        margin: 1rem 0;
+        border-radius: 15px;
+    }
+    
+    /* Enhanced Success/Error Messages */
+    .success-message {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 5px solid #28a745;
+    }
+    
+    .error-message {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 5px solid #dc3545;
+    }
+    
+    /* Enhanced File Uploader Styling */
+    .stFileUploader {
+        margin-top: 1rem;
+        border: 2px solid #667eea;
+        border-radius: 15px;
+        background: white;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stFileUploader:hover {
+        border-color: #764ba2;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+    
+    /* Enhanced Charts and Visualizations */
+    .chart-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    
+    /* Enhanced Loading Animation */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Enhanced Typography */
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    p {
+        line-height: 1.6;
+        color: #495057;
+    }
+    
+    /* Enhanced Buttons */
+    .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 12px;
-        padding: 1rem 2rem;
+        border-radius: 15px;
+        padding: 0.75rem 2rem;
         font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-        position: relative;
-        overflow: hidden;
+        transition: all 0.3s ease;
     }
     
-    .custom-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
-    }
-    
-    .custom-button:hover::before {
-        left: 100%;
-    }
-    
-    .custom-button:hover {
+    .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
     }
     
-    /* Grad-CAM Toggle */
-    .gradcam-toggle {
+    /* Enhanced Grid Layout */
+    .prediction-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    /* Enhanced Image Display */
+    .image-container {
         background: white;
-        border-radius: 12px;
+        border-radius: 20px;
         padding: 1.5rem;
         margin: 1.5rem 0;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        text-align: center;
     }
     
-    .toggle-buttons {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
+    .image-container img {
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
-    .toggle-btn {
-        background: #f8f9fa;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
+    /* Enhanced Status Indicators */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
         padding: 0.5rem 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: 500;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
     }
     
-    .toggle-btn.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-color: #667eea;
+    .status-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
     }
     
-    .toggle-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    .status-error {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
     }
     
-    /* Responsive Design */
+    .status-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+    }
+    
+    /* Enhanced Responsive Design */
     @media (max-width: 768px) {
         .main-header h1 {
-            font-size: 2.5rem;
+            font-size: 3rem;
+        }
+        
+        .main-header p {
+            font-size: 1.2rem;
+        }
+        
+        .section-header h2 {
+            font-size: 1.8rem;
         }
         
         .professional-card {
             padding: 1.5rem;
         }
-        
-        .summary-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .upload-zone {
-            padding: 2rem 1rem;
-        }
-    }
-    
-    /* Dark Mode Adjustments */
-    .dark-mode-text {
-        color: #2c3e50 !important;
-    }
-    
-    .dark-mode-bg {
-        background: rgba(255,255,255,0.95) !important;
-    }
-    
-    /* Style the default Streamlit file uploader to be more prominent */
-    .stFileUploader {
-        margin-top: 1rem !important;
-    }
-    
-    .stFileUploader > div {
-        border: 2px dashed #667eea !important;
-        border-radius: 10px !important;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-        padding: 2rem !important;
-        text-align: center !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .stFileUploader > div:hover {
-        border-color: #764ba2 !important;
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2) !important;
-    }
-    
-    /* Style any default upload areas */
-    [data-testid="stFileUploader"] {
-        margin-top: 1rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -787,43 +781,54 @@ def main():
         """, unsafe_allow_html=True)
         return
     
-    # Professional Sidebar
+    # Enhanced Sidebar
     with st.sidebar:
         st.markdown("""
         <div class="professional-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <h3>📋 How to Use</h3>
-            <p style="font-size: 0.9rem; opacity: 0.9;">
-                1. Upload medical files (images/documents)<br>
-                2. AI analyzes and predicts diseases<br>
-                3. View detailed results and visualizations
-            </p>
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.3rem;">📋 How to Use</h3>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="background: white; color: #667eea; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">1</span>
+                    <span style="font-size: 0.9rem;">Upload medical files</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="background: white; color: #667eea; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">2</span>
+                    <span style="font-size: 0.9rem;">AI analyzes & predicts</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="background: white; color: #667eea; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">3</span>
+                    <span style="font-size: 0.9rem;">View results & insights</span>
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="professional-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
-            <h4>🏥 Supported Diseases</h4>
-            <ul style="color: white; margin: 0.5rem 0; font-size: 0.9rem;">
-                <li>Normal</li>
-                <li>Pneumonia</li>
-                <li>COVID-19</li>
-                <li>Tuberculosis</li>
-                <li>Pleural Effusion</li>
-                <li>Pneumothorax</li>
-                <li>Lung Cancer</li>
-                <li>Cardiomegaly</li>
-            </ul>
+            <h4 style="margin: 0 0 1rem 0; font-size: 1.2rem;">🏥 Supported Diseases</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem;">
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">Normal</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">Pneumonia</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">COVID-19</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">Tuberculosis</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">Pleural Effusion</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">Pneumothorax</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">Lung Cancer</div>
+                <div style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; text-align: center;">Cardiomegaly</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="professional-card" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white;">
-            <h4>⚠️ Important Notice</h4>
-            <p style="font-size: 0.8rem; margin: 0; opacity: 0.9;">
-                This tool is for educational purposes only. 
-                It should not replace professional medical diagnosis. 
-                Always consult with healthcare professionals.
-            </p>
+            <h4 style="margin: 0 0 1rem 0; font-size: 1.2rem;">⚠️ Important Notice</h4>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem;">
+                <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;">
+                    This tool is for <strong>educational purposes only</strong>. 
+                    It should <strong>not replace professional medical diagnosis</strong>. 
+                    Always consult with healthcare professionals for medical decisions.
+                </p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -845,7 +850,24 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # File uploader
+        # Enhanced Upload Area
+        st.markdown("""
+        <div class="upload-area">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Upload Your Medical File</div>
+            <div class="upload-hint">Drag and drop or click to browse</div>
+            <div class="upload-info">
+                <h4>📋 Supported Formats</h4>
+                <ul>
+                    <li><strong>Images:</strong> JPG, JPEG, PNG (Chest X-rays, medical scans)</li>
+                    <li><strong>Documents:</strong> PDF, DOCX, DOC, TXT (Medical reports, patient records)</li>
+                    <li><strong>Max file size:</strong> 10MB</li>
+                </ul>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # File uploader with enhanced styling
         uploaded_file = st.file_uploader(
             "📁 Choose your medical file...",
             type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
@@ -853,9 +875,19 @@ def main():
             key="medical_file_uploader"
         )
         
-        # Show upload status
+        # Show upload status with enhanced styling
         if uploaded_file is not None:
-            st.success(f"✅ File uploaded: {uploaded_file.name}")
+            st.markdown(f"""
+            <div class="success-message">
+                <div class="status-indicator status-success">
+                    ✅ File uploaded successfully
+                </div>
+                <p style="margin: 0.5rem 0 0 0; font-weight: 600;">{uploaded_file.name}</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; opacity: 0.8;">
+                    Size: {(uploaded_file.size / 1024 / 1024):.2f} MB
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         
         if uploaded_file is not None:
             # Process uploaded file
@@ -864,9 +896,14 @@ def main():
             # Validate file size (max 10MB)
             if uploaded_file.size > 10 * 1024 * 1024:
                 st.markdown("""
-                <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
-                    <h3>❌ File Too Large</h3>
-                    <p>Please upload a file smaller than 10MB.</p>
+                <div class="error-message">
+                    <div class="status-indicator status-error">
+                        ❌ File Too Large
+                    </div>
+                    <p style="margin: 0.5rem 0 0 0;">Please upload a file smaller than 10MB.</p>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; opacity: 0.8;">
+                        Current size: {(uploaded_file.size / 1024 / 1024):.2f} MB
+                    </p>
                 </div>
                 """, unsafe_allow_html=True)
                 return
@@ -880,25 +917,38 @@ def main():
                     is_valid, message = validate_image_content(image)
                     if not is_valid:
                         st.markdown(f"""
-                        <div class="professional-card" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24;">
-                            <h3>❌ Invalid Medical Image</h3>
-                            <p>{message}</p>
-                            <p style="font-size: 0.9rem; margin-top: 1rem;">💡 Please upload a chest X-ray image or other medical scan.</p>
+                        <div class="error-message">
+                            <div class="status-indicator status-error">
+                                ❌ Invalid Medical Image
+                            </div>
+                            <p style="margin: 0.5rem 0 0 0;">{message}</p>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; opacity: 0.8;">
+                                💡 Please upload a chest X-ray image or other medical scan.
+                            </p>
                         </div>
                         """, unsafe_allow_html=True)
                         return
                     
                     st.markdown(f"""
-                    <div class="professional-card" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724;">
-                        <h3>✅ Image Validated</h3>
-                        <p>{message}</p>
+                    <div class="success-message">
+                        <div class="status-indicator status-success">
+                            ✅ Image Validated
+                        </div>
+                        <p style="margin: 0.5rem 0 0 0;">{message}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Display uploaded image with professional styling
+                    # Display uploaded image with enhanced styling
                     st.markdown("""
-                    <div class="professional-card">
-                        <h4 style="margin: 0 0 1rem 0; color: #2c3e50; font-size: 1.3rem;">📷 Uploaded X-Ray Image</h4>
+                    <div class="image-container">
+                        <h4 style="margin: 0 0 1.5rem 0; color: #2c3e50; font-size: 1.4rem; font-weight: 700;">
+                            📷 Uploaded X-Ray Image
+                        </h4>
+                        <div style="position: relative; display: inline-block;">
+                            <div style="position: absolute; top: 10px; right: 10px; background: rgba(102, 126, 234, 0.9); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+                                AI Ready
+                            </div>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                     st.image(image, width=600)
@@ -927,24 +977,42 @@ def main():
                     
 
                     
-                    # Top 3 Predictions with professional cards
-                    st.markdown("### 📊 Top 3 Predictions")
+                    # Enhanced Prediction Display
+                    st.markdown("""
+                    <div class="section-header">
+                        <h2>📊 AI Predictions <span class="tooltip">ⓘ
+                            <span class="tooltiptext">
+                                AI analyzes your X-ray and predicts the likelihood of different diseases.<br>
+                                Higher confidence scores indicate more certain predictions.
+                            </span>
+                        </span></h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Top 3 Predictions with enhanced cards
                     for i, pred in enumerate(predictions):
                         confidence_level = "low" if pred['confidence'] < 0.5 else "medium" if pred['confidence'] < 0.8 else "high"
                         confidence_color = "#28a745" if pred['disease'] == 'NORMAL' else "#dc3545"
+                        rank_emoji = "🥇" if i == 0 else "🥈" if i == 1 else "🥉"
                         
                         st.markdown(f"""
                         <div class="professional-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <div>
-                                    <strong style="color: #2c3e50; font-size: 1.2rem;">
-                                        {i+1}. {pred['display_name']}
-                                    </strong>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span style="font-size: 2rem;">{rank_emoji}</span>
+                                    <div>
+                                        <strong style="color: #2c3e50; font-size: 1.4rem; font-weight: 700;">
+                                            {pred['display_name']}
+                                        </strong>
+                                        <p style="margin: 0.25rem 0 0 0; color: #6c757d; font-size: 0.9rem;">
+                                            Rank #{i+1} • {pred['disease']}
+                                        </p>
+                                    </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <span style="color: {confidence_color}; font-weight: bold; font-size: 1.2rem;">
+                                    <div style="background: {confidence_color}; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; font-size: 1.1rem;">
                                         {pred['confidence']:.1%}
-                                    </span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="confidence-container">
@@ -1124,7 +1192,7 @@ def main():
             
             # Grad-CAM Toggle
             st.markdown("""
-            <div class="gradcam-toggle">
+            <div class="professional-card">
                 <h4 style="margin: 0 0 1rem 0; color: #2c3e50;">🎯 Visualization Mode</h4>
                 <div class="toggle-buttons">
                     <button class="toggle-btn active" onclick="showOriginal()">Original</button>
@@ -1307,13 +1375,34 @@ def main():
             </div>
             """, unsafe_allow_html=True)
     
-    # Professional footer
+    # Enhanced Footer
     st.markdown("""
-    <div class="professional-card" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; text-align: center;">
-        <h4 style="margin: 0 0 1rem 0;">🏥 Medical AI Assistant</h4>
-        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">
-            Built with PyTorch & Streamlit | For educational purposes only - Not for medical diagnosis
+    <div class="professional-card" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; text-align: center; margin-top: 3rem;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; margin-bottom: 1.5rem;">
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 15px; min-width: 120px;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏥</div>
+                <div style="font-size: 0.8rem; font-weight: 600;">Medical AI</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 15px; min-width: 120px;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔬</div>
+                <div style="font-size: 0.8rem; font-weight: 600;">AI Analysis</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 15px; min-width: 120px;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                <div style="font-size: 0.8rem; font-weight: 600;">Predictions</div>
+            </div>
+        </div>
+        <h4 style="margin: 0 0 1rem 0; font-size: 1.3rem;">🏥 Medical AI Assistant</h4>
+        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem; line-height: 1.4;">
+            Built with <strong>PyTorch</strong> & <strong>Streamlit</strong> | 
+            For <strong>educational purposes only</strong> - Not for medical diagnosis
         </p>
+        <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
+            <p style="margin: 0; opacity: 0.8; font-size: 0.85rem; line-height: 1.4;">
+                <strong>⚠️ Disclaimer:</strong> This tool is designed for educational and research purposes. 
+                It should not be used for actual medical diagnosis. Always consult qualified healthcare professionals.
+            </p>
+        </div>
         <p style="margin: 1rem 0 0 0; opacity: 0.7; font-size: 0.8rem;">
             © 2024 Medical AI Assistant. All rights reserved.
         </p>
