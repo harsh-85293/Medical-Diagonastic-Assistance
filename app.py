@@ -449,6 +449,20 @@ st.markdown("""
     .dark-mode-bg {
         background: rgba(255,255,255,0.95) !important;
     }
+    
+    /* Hide default Streamlit file uploader styling */
+    .stFileUploader {
+        display: none !important;
+    }
+    
+    .stFileUploader > div {
+        display: none !important;
+    }
+    
+    /* Hide any default upload areas */
+    [data-testid="stFileUploader"] {
+        display: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -818,15 +832,22 @@ def main():
             <div class="upload-icon">📁</div>
             <div class="upload-text">Drag & Drop your medical file here</div>
             <div class="upload-hint">or click to browse files</div>
+            <div style="margin-top: 1rem; font-size: 0.9rem; color: #6c757d;">
+                <strong>📋 Supported Formats:</strong><br>
+                • Images: JPG, JPEG, PNG (Chest X-rays, medical scans)<br>
+                • Documents: PDF, DOCX, DOC, TXT (Medical reports, patient records)<br>
+                • <strong>Max file size: 10MB</strong>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
-        # File uploader (hidden but functional)
+        # File uploader (completely hidden, only custom upload zone visible)
         uploaded_file = st.file_uploader(
             "Choose your medical file...",
             type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
             help="Upload medical images (JPG, PNG) or documents (PDF, DOCX, DOC, TXT)",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            key="medical_file_uploader"
         )
         
         if uploaded_file is not None:
