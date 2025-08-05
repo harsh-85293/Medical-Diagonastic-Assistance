@@ -861,7 +861,7 @@ def main():
         
         # Professional Drag & Drop Upload Zone
         st.markdown("""
-        <div class="upload-zone" id="custom-upload-zone" onclick="document.getElementById('medical_file_uploader').click();">
+        <div class="upload-zone" id="custom-upload-zone">
             <div class="upload-icon">📁</div>
             <div class="upload-text">Drag & Drop your medical file here</div>
             <div class="upload-hint">or click to browse files</div>
@@ -907,9 +907,21 @@ def main():
                     const files = e.dataTransfer.files;
                     if (files.length > 0) {
                         console.log('Files dropped:', files.length);
-                        fileInput.files = files;
-                        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-                        console.log('Change event dispatched');
+                        try {
+                            // Use a more compatible approach
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(files[0]);
+                            fileInput.files = dataTransfer.files;
+                            
+                            // Trigger change event
+                            const event = new Event('change', { bubbles: true });
+                            fileInput.dispatchEvent(event);
+                            console.log('Change event dispatched successfully');
+                        } catch (error) {
+                            console.error('Error handling dropped files:', error);
+                            // Fallback: try to trigger the file dialog
+                            fileInput.click();
+                        }
                     }
                 });
                 
@@ -918,7 +930,14 @@ def main():
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('Custom zone clicked');
-                    fileInput.click();
+                    try {
+                        // Use a more reliable method
+                        setTimeout(function() {
+                            fileInput.click();
+                        }, 100);
+                    } catch (error) {
+                        console.error('Error clicking file input:', error);
+                    }
                 });
                 
                 // Also handle the file input change event
