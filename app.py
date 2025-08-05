@@ -987,47 +987,7 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Main Prediction Section
-                    if predictions:
-                        top_prediction = predictions[0]
-                        confidence_level = "low" if top_prediction['confidence'] < 0.5 else "medium" if top_prediction['confidence'] < 0.8 else "high"
-                        suggested_action = "Consult doctor" if top_prediction['disease'] != 'NORMAL' else "Monitor symptoms"
-                        
-                        st.markdown(f"""
-                        <div class="professional-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                            <div style="text-align: center; margin-bottom: 2rem;">
-                                <h2 style="margin: 0 0 1rem 0; font-size: 2.5rem; color: white;">🎯 Prediction</h2>
-                                <h1 style="margin: 0; font-size: 3.5rem; color: white; font-weight: bold;">{top_prediction['display_name']}</h1>
-                            </div>
-                            
-                            <div class="confidence-container" style="margin-bottom: 2rem;">
-                                <div class="confidence-label">
-                                    <span style="color: white;">Confidence Score</span>
-                                    <span style="color: white; font-weight: bold;">{top_prediction['confidence']:.1%}</span>
-                                </div>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill {confidence_level}" 
-                                         style="width: {top_prediction['confidence']*100}%"></div>
-                                </div>
-                            </div>
-                            
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                                <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                                    <h4 style="color: white; margin: 0 0 0.5rem 0;">Disease</h4>
-                                    <p style="color: white; margin: 0; font-weight: bold;">{top_prediction['display_name']}</p>
-                                </div>
-                                <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                                    <h4 style="color: white; margin: 0 0 0.5rem 0;">Confidence</h4>
-                                    <p style="color: white; margin: 0; font-weight: bold;">{top_prediction['confidence']:.1%}</p>
-                                </div>
-                            </div>
-                            
-                            <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                                <h4 style="color: white; margin: 0 0 0.5rem 0;">Suggested Action</h4>
-                                <p style="color: white; margin: 0; font-weight: bold;">{suggested_action}</p>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+
                     
                     # Top 3 Predictions with professional cards
                     st.markdown("### 📊 Top 3 Predictions")
