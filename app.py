@@ -461,24 +461,30 @@ st.markdown("""
         background: rgba(255,255,255,0.95) !important;
     }
     
-    /* Hide default Streamlit file uploader styling but keep it accessible */
+    /* Style the default Streamlit file uploader to be more prominent */
     .stFileUploader {
-        opacity: 0 !important;
-        position: absolute !important;
-        left: -9999px !important;
-        pointer-events: none !important;
+        margin-top: 1rem !important;
     }
     
     .stFileUploader > div {
-        opacity: 0 !important;
+        border: 2px dashed #667eea !important;
+        border-radius: 10px !important;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+        padding: 2rem !important;
+        text-align: center !important;
+        transition: all 0.3s ease !important;
     }
     
-    /* Hide any default upload areas but keep them accessible */
+    .stFileUploader > div:hover {
+        border-color: #764ba2 !important;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    /* Style any default upload areas */
     [data-testid="stFileUploader"] {
-        opacity: 0 !important;
-        position: absolute !important;
-        left: -9999px !important;
-        pointer-events: none !important;
+        margin-top: 1rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -859,12 +865,12 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # Professional Drag & Drop Upload Zone
+        # Professional Upload Zone (Visual Only - No JavaScript Conflicts)
         st.markdown("""
         <div class="upload-zone" id="custom-upload-zone">
             <div class="upload-icon">📁</div>
-            <div class="upload-text">Drag & Drop your medical file here</div>
-            <div class="upload-hint">or click to browse files</div>
+            <div class="upload-text">Upload your medical file here</div>
+            <div class="upload-hint">Click the upload button below</div>
             <div style="margin-top: 1rem; font-size: 0.9rem; color: #6c757d;">
                 <strong>📋 Supported Formats:</strong><br>
                 • Images: JPG, JPEG, PNG (Chest X-rays, medical scans)<br>
@@ -872,120 +878,19 @@ def main():
                 • <strong>Max file size: 10MB</strong>
             </div>
         </div>
-        
-        <script>
-        // Make the custom upload zone functional with better error handling
-        document.addEventListener('DOMContentLoaded', function() {
-            const customZone = document.getElementById('custom-upload-zone');
-            const fileInput = document.getElementById('medical_file_uploader');
-            
-            console.log('Custom upload zone found:', !!customZone);
-            console.log('File input found:', !!fileInput);
-            
-            if (customZone && fileInput) {
-                // Handle drag and drop
-                customZone.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    customZone.style.borderColor = '#764ba2';
-                    customZone.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)';
-                });
-                
-                customZone.addEventListener('dragleave', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    customZone.style.borderColor = '#667eea';
-                    customZone.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
-                });
-                
-                customZone.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    customZone.style.borderColor = '#667eea';
-                    customZone.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
-                    
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0) {
-                        console.log('Files dropped:', files.length);
-                        try {
-                            // Use a more compatible approach
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(files[0]);
-                            fileInput.files = dataTransfer.files;
-                            
-                            // Trigger change event
-                            const event = new Event('change', { bubbles: true });
-                            fileInput.dispatchEvent(event);
-                            console.log('Change event dispatched successfully');
-                        } catch (error) {
-                            console.error('Error handling dropped files:', error);
-                            // Fallback: try to trigger the file dialog
-                            fileInput.click();
-                        }
-                    }
-                });
-                
-                // Handle click to trigger file input
-                customZone.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Custom zone clicked');
-                    try {
-                        // Use a more reliable method
-                        setTimeout(function() {
-                            fileInput.click();
-                        }, 100);
-                    } catch (error) {
-                        console.error('Error clicking file input:', error);
-                    }
-                });
-                
-                // Also handle the file input change event
-                fileInput.addEventListener('change', function(e) {
-                    console.log('File input changed:', e.target.files.length, 'files');
-                });
-            } else {
-                console.error('Custom upload zone or file input not found');
-                if (!customZone) console.error('Custom zone not found');
-                if (!fileInput) console.error('File input not found');
-            }
-        });
-        </script>
         """, unsafe_allow_html=True)
         
-        # File uploader (hidden but accessible)
+        # File uploader (now visible and styled)
         uploaded_file = st.file_uploader(
-            "Choose your medical file...",
+            "📁 Choose your medical file...",
             type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
-            help="Upload medical images (JPG, PNG) or documents (PDF, DOCX, DOC, TXT)",
-            label_visibility="collapsed",
+            help="Upload medical images (JPG, PNG) or documents (PDF, DOCX, DOC, TXT). Max size: 10MB",
             key="medical_file_uploader"
         )
         
-        # Debug: Show if file is uploaded
+        # Show upload status
         if uploaded_file is not None:
             st.success(f"✅ File uploaded: {uploaded_file.name}")
-        
-        # Fallback: If custom upload doesn't work, show a simple button
-        if uploaded_file is None:
-            st.markdown("""
-            <div style="margin-top: 1rem; text-align: center;">
-                <p style="color: #6c757d; font-size: 0.9rem;">
-                    💡 If the upload zone above doesn't work, try this alternative:
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Simple fallback uploader
-            fallback_upload = st.file_uploader(
-                "📁 Alternative Upload Method",
-                type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
-                key="fallback_uploader"
-            )
-            
-            if fallback_upload is not None:
-                uploaded_file = fallback_upload
-                st.success(f"✅ File uploaded via fallback: {uploaded_file.name}")
         
         if uploaded_file is not None:
             # Process uploaded file
