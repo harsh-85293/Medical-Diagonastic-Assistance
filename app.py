@@ -482,6 +482,10 @@ def load_model():
             model = create_model('resnet50', len(DISEASE_LABELS), pretrained=False)
             model = model.to(device)
             
+            # Log model structure for debugging
+            st.info(f"Model created with {len(DISEASE_LABELS)} classes")
+            st.info(f"Model device: {next(model.parameters()).device}")
+            
             # Load checkpoint with detailed error handling
             try:
                 # Check if file exists and is readable
@@ -502,20 +506,53 @@ def load_model():
                 if isinstance(checkpoint, dict):
                     st.info("Checkpoint is a dictionary. Available keys: " + str(list(checkpoint.keys())))
                     
-                    # Try different possible keys for model state dict
-                    if 'model_state_dict' in checkpoint:
+                    # Check if this is already a state dict (contains weight keys)
+                    first_key = list(checkpoint.keys())[0] if checkpoint.keys() else ""
+                    if any(key.startswith(('resnet.', 'fc.')) for key in checkpoint.keys()):
+                        st.info("Checkpoint appears to be a state dict, loading directly")
+                        
+                        # Debug: Show some checkpoint keys and model state dict keys
+                        checkpoint_keys = list(checkpoint.keys())[:5]  # First 5 keys
+                        model_keys = list(model.state_dict().keys())[:5]  # First 5 keys
+                        st.info(f"Checkpoint keys (first 5): {checkpoint_keys}")
+                        st.info(f"Model keys (first 5): {model_keys}")
+                        
+                        try:
+                            model.load_state_dict(checkpoint)
+                            st.info("✅ State dict loaded successfully")
+                        except Exception as load_error:
+                            st.error(f"❌ Error loading state dict: {load_error}")
+                            st.info("Attempting to load with strict=False...")
+                            try:
+                                model.load_state_dict(checkpoint, strict=False)
+                                st.info("✅ State dict loaded with strict=False")
+                            except Exception as strict_error:
+                                st.error(f"❌ Failed to load even with strict=False: {strict_error}")
+                                return None, None
+                    elif 'model_state_dict' in checkpoint:
                         st.info("Loading from 'model_state_dict' key")
-                        model.load_state_dict(checkpoint['model_state_dict'])
+                        try:
+                            model.load_state_dict(checkpoint['model_state_dict'])
+                        except Exception as load_error:
+                            st.error(f"❌ Error loading from model_state_dict: {load_error}")
+                            return None, None
                     elif 'state_dict' in checkpoint:
                         st.info("Loading from 'state_dict' key")
-                        model.load_state_dict(checkpoint['state_dict'])
+                        try:
+                            model.load_state_dict(checkpoint['state_dict'])
+                        except Exception as load_error:
+                            st.error(f"❌ Error loading from state_dict: {load_error}")
+                            return None, None
                     elif 'model' in checkpoint:
                         st.info("Loading from 'model' key")
-                        model.load_state_dict(checkpoint['model'])
+                        try:
+                            model.load_state_dict(checkpoint['model'])
+                        except Exception as load_error:
+                            st.error(f"❌ Error loading from model: {load_error}")
+                            return None, None
                     else:
-                        # Try to load the entire checkpoint as state dict
-                        st.info("Attempting to load entire checkpoint as state dict")
-                        model.load_state_dict(checkpoint)
+                        st.error("❌ Unknown checkpoint format. Available keys: " + str(list(checkpoint.keys())))
+                        return None, None
                 else:
                     st.info("Checkpoint is not a dictionary, loading directly as state dict")
                     model.load_state_dict(checkpoint)
