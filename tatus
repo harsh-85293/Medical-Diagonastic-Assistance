@@ -1,5 +1,0 @@
-[33m60c7f54[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix Streamlit Cloud deployment: rename apps to use multi-class as default
-[33m81b9231[m Expand to multi-class disease classification with comprehensive features
-[33m85a1a38[m Generalize UI text for broader medical file support
-[33me3b38e4[m Add comprehensive file validation and user guidance for invalid uploads
-[33m1624df2[m Fix Grad-CAM for simple model and improve error handling
