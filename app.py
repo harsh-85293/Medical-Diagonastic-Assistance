@@ -175,6 +175,7 @@ st.markdown("""
         transition: all 0.3s ease;
         position: relative;
         cursor: pointer;
+        user-select: none;
     }
     
     .upload-zone:hover {
@@ -183,10 +184,20 @@ st.markdown("""
         transform: scale(1.02);
     }
     
+    .upload-zone:active {
+        transform: scale(0.98);
+    }
+    
     .upload-icon {
         font-size: 4rem;
         color: #667eea;
         margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-zone:hover .upload-icon {
+        color: #764ba2;
+        transform: scale(1.1);
     }
     
     .upload-text {
@@ -844,7 +855,7 @@ def main():
         
         # Professional Drag & Drop Upload Zone
         st.markdown("""
-        <div class="upload-zone">
+        <div class="upload-zone" id="custom-upload-zone" onclick="document.getElementById('medical_file_uploader').click();">
             <div class="upload-icon">📁</div>
             <div class="upload-text">Drag & Drop your medical file here</div>
             <div class="upload-hint">or click to browse files</div>
@@ -855,6 +866,46 @@ def main():
                 • <strong>Max file size: 10MB</strong>
             </div>
         </div>
+        
+        <script>
+        // Make the custom upload zone functional
+        document.addEventListener('DOMContentLoaded', function() {
+            const customZone = document.getElementById('custom-upload-zone');
+            const fileInput = document.getElementById('medical_file_uploader');
+            
+            if (customZone && fileInput) {
+                // Handle drag and drop
+                customZone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    customZone.style.borderColor = '#764ba2';
+                    customZone.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)';
+                });
+                
+                customZone.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    customZone.style.borderColor = '#667eea';
+                    customZone.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+                });
+                
+                customZone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    customZone.style.borderColor = '#667eea';
+                    customZone.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+                
+                // Handle click to trigger file input
+                customZone.addEventListener('click', function() {
+                    fileInput.click();
+                });
+            }
+        });
+        </script>
         """, unsafe_allow_html=True)
         
         # File uploader (completely hidden, only custom upload zone visible)
@@ -865,6 +916,10 @@ def main():
             label_visibility="collapsed",
             key="medical_file_uploader"
         )
+        
+        # Debug: Show if file is uploaded
+        if uploaded_file is not None:
+            st.success(f"✅ File uploaded: {uploaded_file.name}")
         
         if uploaded_file is not None:
             # Process uploaded file
