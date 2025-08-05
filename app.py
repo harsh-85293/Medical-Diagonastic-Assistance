@@ -461,18 +461,24 @@ st.markdown("""
         background: rgba(255,255,255,0.95) !important;
     }
     
-    /* Hide default Streamlit file uploader styling */
+    /* Hide default Streamlit file uploader styling but keep it accessible */
     .stFileUploader {
-        display: none !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        pointer-events: none !important;
     }
     
     .stFileUploader > div {
-        display: none !important;
+        opacity: 0 !important;
     }
     
-    /* Hide any default upload areas */
+    /* Hide any default upload areas but keep them accessible */
     [data-testid="stFileUploader"] {
-        display: none !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        pointer-events: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -868,47 +874,67 @@ def main():
         </div>
         
         <script>
-        // Make the custom upload zone functional
+        // Make the custom upload zone functional with better error handling
         document.addEventListener('DOMContentLoaded', function() {
             const customZone = document.getElementById('custom-upload-zone');
             const fileInput = document.getElementById('medical_file_uploader');
+            
+            console.log('Custom upload zone found:', !!customZone);
+            console.log('File input found:', !!fileInput);
             
             if (customZone && fileInput) {
                 // Handle drag and drop
                 customZone.addEventListener('dragover', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     customZone.style.borderColor = '#764ba2';
                     customZone.style.background = 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)';
                 });
                 
                 customZone.addEventListener('dragleave', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     customZone.style.borderColor = '#667eea';
                     customZone.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
                 });
                 
                 customZone.addEventListener('drop', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     customZone.style.borderColor = '#667eea';
                     customZone.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
                     
                     const files = e.dataTransfer.files;
                     if (files.length > 0) {
+                        console.log('Files dropped:', files.length);
                         fileInput.files = files;
                         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        console.log('Change event dispatched');
                     }
                 });
                 
                 // Handle click to trigger file input
-                customZone.addEventListener('click', function() {
+                customZone.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Custom zone clicked');
                     fileInput.click();
                 });
+                
+                // Also handle the file input change event
+                fileInput.addEventListener('change', function(e) {
+                    console.log('File input changed:', e.target.files.length, 'files');
+                });
+            } else {
+                console.error('Custom upload zone or file input not found');
+                if (!customZone) console.error('Custom zone not found');
+                if (!fileInput) console.error('File input not found');
             }
         });
         </script>
         """, unsafe_allow_html=True)
         
-        # File uploader (completely hidden, only custom upload zone visible)
+        # File uploader (hidden but accessible)
         uploaded_file = st.file_uploader(
             "Choose your medical file...",
             type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
@@ -920,6 +946,27 @@ def main():
         # Debug: Show if file is uploaded
         if uploaded_file is not None:
             st.success(f"✅ File uploaded: {uploaded_file.name}")
+        
+        # Fallback: If custom upload doesn't work, show a simple button
+        if uploaded_file is None:
+            st.markdown("""
+            <div style="margin-top: 1rem; text-align: center;">
+                <p style="color: #6c757d; font-size: 0.9rem;">
+                    💡 If the upload zone above doesn't work, try this alternative:
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Simple fallback uploader
+            fallback_upload = st.file_uploader(
+                "📁 Alternative Upload Method",
+                type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
+                key="fallback_uploader"
+            )
+            
+            if fallback_upload is not None:
+                uploaded_file = fallback_upload
+                st.success(f"✅ File uploaded via fallback: {uploaded_file.name}")
         
         if uploaded_file is not None:
             # Process uploaded file
