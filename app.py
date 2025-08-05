@@ -963,7 +963,7 @@ def main():
                         <h4 style="margin: 0 0 1rem 0; color: #2c3e50; font-size: 1.3rem;">📷 Uploaded X-Ray Image</h4>
                     </div>
                     """, unsafe_allow_html=True)
-                    st.image(image, use_container_width=True)
+                    st.image(image, width=600)
                     
                     # Preprocess image and make prediction
                     with st.spinner("🔬 Analyzing image with AI..."):
