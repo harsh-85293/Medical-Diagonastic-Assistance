@@ -227,6 +227,15 @@ st.markdown("""
         color: #2c3e50;
     }
     
+    /* Override for summary card confidence labels */
+    .summary-card .confidence-label {
+        color: white !important;
+    }
+    
+    .summary-card .confidence-label span {
+        color: white !important;
+    }
+    
     .confidence-bar {
         background: #e9ecef;
         border-radius: 12px;
@@ -275,13 +284,14 @@ st.markdown("""
     /* Summary Card */
     .summary-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        color: white !important;
         border-radius: 20px;
         padding: 2.5rem;
         margin: 2rem 0;
         box-shadow: 0 12px 40px rgba(0,0,0,0.15);
         position: relative;
         overflow: hidden;
+        display: block;
     }
     
     .summary-card::before {
@@ -298,6 +308,15 @@ st.markdown("""
     .summary-content {
         position: relative;
         z-index: 1;
+        color: white !important;
+    }
+    
+    .summary-content h2,
+    .summary-content h3,
+    .summary-content h4,
+    .summary-content p,
+    .summary-content span {
+        color: white !important;
     }
     
     .summary-grid {
@@ -321,12 +340,20 @@ st.markdown("""
         opacity: 0.9;
         text-transform: uppercase;
         letter-spacing: 1px;
+        color: white !important;
     }
     
     .summary-item p {
         margin: 0;
         font-size: 1.5rem;
         font-weight: 700;
+        color: white !important;
+    }
+    
+    /* Ensure summary grid items in summary card have white text */
+    .summary-card .summary-item h4,
+    .summary-card .summary-item p {
+        color: white !important;
     }
     
     /* Tooltip Styles */
@@ -967,13 +994,15 @@ def main():
                     st.markdown(f"""
                     <div class="summary-card">
                         <div class="summary-content">
-                            <h3 style="margin: 0 0 1rem 0; font-size: 2rem;">🎯 Primary Prediction</h3>
-                            <h2 style="margin: 0 0 2rem 0; font-size: 3rem;">{top_prediction['display_name']}</h2>
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                <h3 style="margin: 0 0 1rem 0; font-size: 2rem; color: white;">🎯 Primary Prediction</h3>
+                                <h2 style="margin: 0; font-size: 3rem; color: white; font-weight: bold;">{top_prediction['display_name']}</h2>
+                            </div>
                             
-                            <div class="confidence-container">
+                            <div class="confidence-container" style="margin-bottom: 2rem;">
                                 <div class="confidence-label">
-                                    <span>Confidence Score</span>
-                                    <span>{top_prediction['confidence']:.1%}</span>
+                                    <span style="color: white;">Confidence Score</span>
+                                    <span style="color: white; font-weight: bold;">{top_prediction['confidence']:.1%}</span>
                                 </div>
                                 <div class="confidence-bar">
                                     <div class="confidence-fill {confidence_level}" 
@@ -983,20 +1012,20 @@ def main():
                             
                             <div class="summary-grid">
                                 <div class="summary-item">
-                                    <h4>Disease</h4>
-                                    <p>{top_prediction['display_name']}</p>
+                                    <h4 style="color: white;">Disease</h4>
+                                    <p style="color: white;">{top_prediction['display_name']}</p>
                                 </div>
                                 <div class="summary-item">
-                                    <h4>Confidence</h4>
-                                    <p>{top_prediction['confidence']:.1%}</p>
+                                    <h4 style="color: white;">Confidence</h4>
+                                    <p style="color: white;">{top_prediction['confidence']:.1%}</p>
                                 </div>
                                 <div class="summary-item">
-                                    <h4>Analysis Time</h4>
-                                    <p>~2.3s</p>
+                                    <h4 style="color: white;">Analysis Time</h4>
+                                    <p style="color: white;">~2.3s</p>
                                 </div>
                                 <div class="summary-item">
-                                    <h4>Suggested Action</h4>
-                                    <p>{"Consult doctor" if top_prediction['disease'] != 'NORMAL' else "Monitor symptoms"}</p>
+                                    <h4 style="color: white;">Suggested Action</h4>
+                                    <p style="color: white;">{"Consult doctor" if top_prediction['disease'] != 'NORMAL' else "Monitor symptoms"}</p>
                                 </div>
                             </div>
                         </div>
