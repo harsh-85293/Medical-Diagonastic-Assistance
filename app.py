@@ -164,54 +164,7 @@ st.markdown("""
         box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     }
     
-    /* Drag & Drop Upload Zone */
-    .upload-zone {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border: 3px dashed #667eea;
-        border-radius: 20px;
-        padding: 4rem 2rem;
-        text-align: center;
-        margin: 2rem 0;
-        transition: all 0.3s ease;
-        position: relative;
-        cursor: pointer;
-        user-select: none;
-    }
-    
-    .upload-zone:hover {
-        border-color: #764ba2;
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        transform: scale(1.02);
-    }
-    
-    .upload-zone:active {
-        transform: scale(0.98);
-    }
-    
-    .upload-icon {
-        font-size: 4rem;
-        color: #667eea;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .upload-zone:hover .upload-icon {
-        color: #764ba2;
-        transform: scale(1.1);
-    }
-    
-    .upload-text {
-        font-size: 1.3rem;
-        color: #2c3e50;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-    
-    .upload-hint {
-        font-size: 1rem;
-        color: #6c757d;
-        opacity: 0.8;
-    }
+
     
     /* Animated Confidence Bar */
     .confidence-container {
@@ -892,22 +845,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # Professional Upload Zone (Visual Only - No JavaScript Conflicts)
-        st.markdown("""
-        <div class="upload-zone" id="custom-upload-zone">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Upload your medical file here</div>
-            <div class="upload-hint">Click the upload button below</div>
-            <div style="margin-top: 1rem; font-size: 0.9rem; color: #6c757d;">
-                <strong>📋 Supported Formats:</strong><br>
-                • Images: JPG, JPEG, PNG (Chest X-rays, medical scans)<br>
-                • Documents: PDF, DOCX, DOC, TXT (Medical reports, patient records)<br>
-                • <strong>Max file size: 10MB</strong>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # File uploader (now visible and styled)
+        # File uploader
         uploaded_file = st.file_uploader(
             "📁 Choose your medical file...",
             type=['jpg', 'jpeg', 'png', 'pdf', 'docx', 'doc', 'txt'],
