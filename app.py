@@ -337,23 +337,23 @@ def main():
                     top_prediction = predictions[0]
                     prediction_class = "normal-prediction" if top_prediction['disease'] == 'NORMAL' else "disease-prediction"
                     
-                                         st.markdown(f"""
-                     <div class="prediction-box {prediction_class}">
-                         <h3 style="color: #2c3e50; margin: 0;">🎯 Primary Prediction: {top_prediction['display_name']}</h3>
-                         <p style="font-size: 1.1rem; font-weight: bold; margin: 0.5rem 0;">Confidence: {top_prediction['confidence']:.2%}</p>
-                     </div>
-                     """, unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div class="prediction-box {prediction_class}">
+                        <h3 style="color: #2c3e50; margin: 0;">🎯 Primary Prediction: {top_prediction['display_name']}</h3>
+                        <p style="font-size: 1.1rem; font-weight: bold; margin: 0.5rem 0;">Confidence: {top_prediction['confidence']:.2%}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
-                                         # Show top 3 predictions
-                     st.markdown("### 📊 Top 3 Predictions")
-                     for i, pred in enumerate(predictions):
-                         confidence_color = "#28a745" if pred['disease'] == 'NORMAL' else "#dc3545"
-                         st.markdown(f"""
-                         <div class="metric-card">
-                             <strong style="color: #2c3e50;">{i+1}. {pred['display_name']}</strong><br>
-                             <span style="color: {confidence_color}; font-weight: bold;">Confidence: {pred['confidence']:.2%}</span>
-                         </div>
-                         """, unsafe_allow_html=True)
+                    # Show top 3 predictions
+                    st.markdown("### 📊 Top 3 Predictions")
+                    for i, pred in enumerate(predictions):
+                        confidence_color = "#28a745" if pred['disease'] == 'NORMAL' else "#dc3545"
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <strong style="color: #2c3e50;">{i+1}. {pred['display_name']}</strong><br>
+                            <span style="color: {confidence_color}; font-weight: bold;">Confidence: {pred['confidence']:.2%}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
                     
                     # Prediction chart
                     st.plotly_chart(create_prediction_chart(predictions), use_container_width=True)
