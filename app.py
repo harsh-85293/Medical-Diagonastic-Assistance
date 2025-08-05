@@ -160,75 +160,7 @@ st.markdown("""
         box-shadow: 0 20px 60px rgba(0,0,0,0.12);
     }
     
-    /* Enhanced Upload Area */
-    .upload-area {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border: 3px dashed #667eea;
-        border-radius: 25px;
-        padding: 3rem 2rem;
-        text-align: center;
-        margin: 2rem 0;
-        transition: all 0.3s ease;
-        position: relative;
-        cursor: pointer;
-        user-select: none;
-    }
-    
-    .upload-area:hover {
-        border-color: #764ba2;
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        transform: scale(1.02);
-    }
-    
-    .upload-area:active {
-        transform: scale(0.98);
-    }
-    
-    .upload-icon {
-        font-size: 4rem;
-        color: #667eea;
-        margin-bottom: 1.5rem;
-        transition: all 0.3s ease;
-    }
-    
-    .upload-area:hover .upload-icon {
-        color: #764ba2;
-        transform: scale(1.1);
-    }
-    
-    .upload-text {
-        font-size: 1.5rem;
-        color: #2c3e50;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-    
-    .upload-hint {
-        font-size: 1.1rem;
-        color: #6c757d;
-        opacity: 0.8;
-        margin-bottom: 1.5rem;
-    }
-    
-    .upload-info {
-        background: rgba(102, 126, 234, 0.1);
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-    }
-    
-    .upload-info h4 {
-        color: #2c3e50;
-        margin: 0 0 1rem 0;
-        font-size: 1.2rem;
-    }
-    
-    .upload-info ul {
-        color: #6c757d;
-        margin: 0;
-        padding-left: 1.5rem;
-        font-size: 0.95rem;
-    }
+
     
     /* Enhanced Confidence Bar */
     .confidence-container {
@@ -850,22 +782,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # Enhanced Upload Area
-        st.markdown("""
-        <div class="upload-area">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Upload Your Medical File</div>
-            <div class="upload-hint">Drag and drop or click to browse</div>
-            <div class="upload-info">
-                <h4>📋 Supported Formats</h4>
-                <ul>
-                    <li><strong>Images:</strong> JPG, JPEG, PNG (Chest X-rays, medical scans)</li>
-                    <li><strong>Documents:</strong> PDF, DOCX, DOC, TXT (Medical reports, patient records)</li>
-                    <li><strong>Max file size:</strong> 10MB</li>
-                </ul>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+
         
         # File uploader with enhanced styling
         uploaded_file = st.file_uploader(
@@ -963,20 +880,6 @@ def main():
                         st.error('Prediction failed. Please try another image or check the model.')
                         return
 
-                    # Analysis Section Header
-                    st.markdown("""
-                    <div class="section-header analysis">
-                        <h2>🔍 AI Analysis Results <span class="tooltip">ⓘ
-                            <span class="tooltiptext">
-                                AI analyzes your X-ray image and predicts the likelihood of different diseases.<br>
-                                Confidence scores indicate how certain the AI is about each prediction.
-                            </span>
-                        </span></h2>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-
-                    
                     # Enhanced Prediction Display
                     st.markdown("""
                     <div class="section-header">
@@ -1121,7 +1024,7 @@ def main():
                 # Document analysis with professional styling
                 st.markdown("""
                 <div class="section-header analysis">
-                    <h2>📊 Document Analysis <span class="tooltip">ⓘ
+                    <h2>📊 Document Statistics <span class="tooltip">ⓘ
                         <span class="tooltiptext">
                             Analyze extracted text from medical documents.<br>
                             View statistics and content summary.
@@ -1328,10 +1231,10 @@ def main():
         elif uploaded_file is not None and file_extension in ['pdf', 'docx', 'doc', 'txt']:
             st.markdown("""
             <div class="section-header analysis">
-                <h2>📄 Document Analysis <span class="tooltip">ⓘ
+                <h2>📄 Document Summary <span class="tooltip">ⓘ
                     <span class="tooltiptext">
-                        Analyze extracted text from medical documents.<br>
-                        View statistics and content summary.
+                        Summary of document processing and analysis.<br>
+                        View extracted content and statistics.
                     </span>
                 </span></h2>
             </div>
