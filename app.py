@@ -103,8 +103,19 @@ def load_model():
             model.eval()
             return model, device
         else:
-            st.error("Multi-class model not found. Please train the model first.")
-            return None, None
+            # Fallback to binary demo model
+            demo_model_path = "models/chest_xray_demo.pth"
+            if os.path.exists(demo_model_path):
+                st.warning("Multi-class model not found. Using binary demo model instead.")
+                from create_demo_model import SimpleChestXRayModel
+                model = SimpleChestXRayModel(num_classes=2)
+                model.load_state_dict(torch.load(demo_model_path, map_location=device))
+                model = model.to(device)
+                model.eval()
+                return model, device
+            else:
+                st.error("No models found. Please train the model first.")
+                return None, None
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None, None
