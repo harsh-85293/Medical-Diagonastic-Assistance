@@ -991,18 +991,23 @@ def main():
                     top_prediction = predictions[0]
                     confidence_level = "low" if top_prediction['confidence'] < 0.5 else "medium" if top_prediction['confidence'] < 0.8 else "high"
                     
-                    st.markdown(f"""
+                    # Display primary prediction with clean HTML structure
+                    disease_name = top_prediction['display_name']
+                    confidence_pct = f"{top_prediction['confidence']:.1%}"
+                    suggested_action = "Consult doctor" if top_prediction['disease'] != 'NORMAL' else "Monitor symptoms"
+                    
+                    primary_html = f"""
                     <div class="summary-card">
                         <div class="summary-content">
                             <div style="text-align: center; margin-bottom: 2rem;">
                                 <h3 style="margin: 0 0 1rem 0; font-size: 2rem; color: white;">🎯 Primary Prediction</h3>
-                                <h2 style="margin: 0; font-size: 3rem; color: white; font-weight: bold;">{top_prediction['display_name']}</h2>
+                                <h2 style="margin: 0; font-size: 3rem; color: white; font-weight: bold;">{disease_name}</h2>
                             </div>
                             
                             <div class="confidence-container" style="margin-bottom: 2rem;">
                                 <div class="confidence-label">
                                     <span style="color: white;">Confidence Score</span>
-                                    <span style="color: white; font-weight: bold;">{top_prediction['confidence']:.1%}</span>
+                                    <span style="color: white; font-weight: bold;">{confidence_pct}</span>
                                 </div>
                                 <div class="confidence-bar">
                                     <div class="confidence-fill {confidence_level}" 
@@ -1013,11 +1018,11 @@ def main():
                             <div class="summary-grid">
                                 <div class="summary-item">
                                     <h4 style="color: white;">Disease</h4>
-                                    <p style="color: white;">{top_prediction['display_name']}</p>
+                                    <p style="color: white;">{disease_name}</p>
                                 </div>
                                 <div class="summary-item">
                                     <h4 style="color: white;">Confidence</h4>
-                                    <p style="color: white;">{top_prediction['confidence']:.1%}</p>
+                                    <p style="color: white;">{confidence_pct}</p>
                                 </div>
                                 <div class="summary-item">
                                     <h4 style="color: white;">Analysis Time</h4>
@@ -1025,12 +1030,26 @@ def main():
                                 </div>
                                 <div class="summary-item">
                                     <h4 style="color: white;">Suggested Action</h4>
-                                    <p style="color: white;">{"Consult doctor" if top_prediction['disease'] != 'NORMAL' else "Monitor symptoms"}</p>
+                                    <p style="color: white;">{suggested_action}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """
+                    
+                    # Render the HTML with proper error handling
+                    try:
+                        st.markdown(primary_html, unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error(f"Error rendering prediction display: {e}")
+                        # Fallback to simple text display
+                        st.markdown(f"## 🎯 Primary Prediction: {top_prediction['display_name']}")
+                        st.markdown(f"**Confidence:** {top_prediction['confidence']:.1%}")
+                        st.markdown(f"**Suggested Action:** {'Consult doctor' if top_prediction['disease'] != 'NORMAL' else 'Monitor symptoms'}")
+                    
+                    # Debug: Check if HTML is being rendered correctly
+                    if st.checkbox("Debug: Show HTML structure", key="debug_html"):
+                        st.code(primary_html, language="html")
                     
                     # Top 3 Predictions with professional cards
                     st.markdown("### 📊 Top 3 Predictions")
