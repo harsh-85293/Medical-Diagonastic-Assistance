@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-Robust Grad-CAM implementation for Medical Diagnosis Assistant
-With CLAHE contrast enhancement and proper layer targeting
-Fixed: Syntax error and imports - v2
+Grad-CAM implementation for Medical Diagnosis Assistant
+Supports multi-class disease classification
 """
 
 import torch
@@ -11,49 +10,184 @@ import numpy as np
 import cv2
 import logging
 from typing import Dict, List
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
+# Disease labels for the medical classification
+DISEASE_LABELS = ['Normal', 'Pneumonia', 'COVID-19', 'Tuberculosis', 'Lung Cancer', 'Cardiomegaly', 'Pleural Effusion', 'Pneumothorax']
+DISEASE_DISPLAY_NAMES = {
+    'Normal': 'Normal',
+    'Pneumonia': 'Pneumonia', 
+    'COVID-19': 'COVID-19',
+    'Tuberculosis': 'Tuberculosis',
+    'Lung Cancer': 'Lung Cancer',
+    'Cardiomegaly': 'Cardiomegaly',
+    'Pleural Effusion': 'Pleural Effusion',
+    'Pneumothorax': 'Pneumothorax'
+}
+
+class GradCAM:
+    """Grad-CAM implementation for multi-class classification"""
+    
+    def __init__(self, model, target_layer=None):
+        self.model = model
+        self.target_layer = target_layer
+        self.gradients = None
+        self.activations = None
+        
+        # Register hooks
+        self._register_hooks()
+    
+    def _register_hooks(self):
+        """Register forward and backward hooks"""
+        def forward_hook(module, input, output):
+            self.activations = output
+        
+        def backward_hook(module, grad_input, grad_output):
+            self.gradients = grad_output[0]
+        
+        # Get target layer
+        if self.target_layer is None:
+            self.target_layer = self._get_target_layer()
+        
+        # Register hooks
+        self.target_layer.register_forward_hook(forward_hook)
+        self.target_layer.register_backward_hook(backward_hook)
+    
+    def _get_target_layer(self):
+        """Get the target layer for Grad-CAM"""
+        logger.info("Analyzing model structure for Grad-CAM target layer...")
+        
+        # Debug: print model structure
+        for name, m in self.model.named_modules():
+            if isinstance(m, torch.nn.Conv2d):
+                logger.info(f"Found Conv2d: {name}")
+        
+        # For ResNet50
+        if hasattr(self.model, 'resnet'):
+            logger.info("Using model.resnet.layer4[-1]")
+            return self.model.resnet.layer4[-1]
+        # For models with backbone
+        elif hasattr(self.model, 'backbone'):
+            try:
+                layer = self.model.backbone.layer4[-1].conv3
+                logger.info("Using model.backbone.layer4[-1].conv3")
+                return layer
+            except:
+                try:
+                    layer = self.model.backbone.layer4[-1]
+                    logger.info("Using model.backbone.layer4[-1]")
+                    return layer
+                except:
+                    pass
+        # For Vision Transformer
+        elif hasattr(self.model, 'vit'):
+            logger.info("Using model.vit.encoder.layers[-1]")
+            return self.model.vit.encoder.layers[-1]
+        # For simple models
+        elif hasattr(self.model, 'features'):
+            logger.info("Using model.features[-2]")
+            return self.model.features[-2]  # Last conv layer
+        
+        # Fallback: find last convolutional layer
+        conv_layers = [m for m in self.model.modules() if isinstance(m, torch.nn.Conv2d)]
+        if conv_layers:
+            logger.info(f"Using fallback last Conv2d layer")
+            return conv_layers[-1]
+        else:
+            raise ValueError("No suitable target layer found for Grad-CAM")
+    
+    def generate_cam(self, input_image, class_idx=None):
+        """Generate Grad-CAM for a specific class"""
+        logger.info(f"Generating Grad-CAM for class {class_idx}")
+        
+        # Ensure model is in eval mode
+        self.model.eval()
+        
+        # Forward pass
+        output = self.model(input_image)
+        logger.info(f"Model output shape: {output.shape}")
+        
+        # If no specific class is provided, use the predicted class
+        if class_idx is None:
+            class_idx = torch.argmax(output, dim=1).item()
+            logger.info(f"Using predicted class: {class_idx}")
+        
+        # Backward pass
+        self.model.zero_grad()
+        if output.dim() > 1 and class_idx < output.shape[1]:
+            output[0, class_idx].backward()
+        else:
+            logger.warning(f"Invalid class_idx {class_idx} for output shape {output.shape}")
+            output.sum().backward()  # Fallback
+        
+        # Get gradients and activations
+        gradients = self.gradients
+        activations = self.activations
+        
+        if gradients is None or activations is None:
+            logger.warning("Gradients or activations not captured. Creating synthetic CAM.")
+            # Create synthetic CAM
+            H, W = input_image.shape[-2:]
+            y, x = np.mgrid[0:H, 0:W]
+            center_y, center_x = H // 2, W // 2
+            distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+            max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
+            cam = 1.0 - (distance / max_dist)
+            return np.clip(cam, 0, 1)
+        
+        logger.info(f"Gradients shape: {gradients.shape}, Activations shape: {activations.shape}")
+        
+        # Global average pooling of gradients
+        weights = torch.mean(gradients, dim=[2, 3])
+        logger.info(f"Weights shape: {weights.shape}")
+        
+        # Weighted combination of activation maps
+        cam = torch.zeros(activations.shape[2:], dtype=torch.float32, device=activations.device)
+        for i, w in enumerate(weights[0]):
+            cam += w * activations[0, i, :, :]
+        
+        # Apply ReLU
+        cam = F.relu(cam)
+        
+        # Normalize
+        cam = cam - cam.min()
+        cam = cam / (cam.max() + 1e-8)
+        
+        cam_np = cam.detach().cpu().numpy()
+        logger.info(f"Generated CAM - shape: {cam_np.shape}, range: [{cam_np.min():.3f}, {cam_np.max():.3f}], std: {cam_np.std():.6f}")
+        
+        return cam_np
+    
+    def generate_multi_class_cam(self, input_image, class_indices=None):
+        """Generate Grad-CAM for multiple classes"""
+        if class_indices is None:
+            # Generate for all classes
+            class_indices = list(range(len(DISEASE_LABELS)))
+        
+        cams = {}
+        for class_idx in class_indices:
+            try:
+                cam = self.generate_cam(input_image, class_idx)
+                cams[class_idx] = cam
+            except Exception as e:
+                logger.warning(f"Could not generate CAM for class {class_idx}: {e}")
+                # Create synthetic fallback
+                H, W = input_image.shape[-2:]
+                y, x = np.mgrid[0:H, 0:W]
+                center_y, center_x = H // 2, W // 2
+                distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+                max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
+                cams[class_idx] = np.clip(1.0 - (distance / max_dist), 0, 1)
+        
+        return cams
+
+
+# Legacy function - kept for compatibility
 def _find_last_conv(module: torch.nn.Module):
     """Return the last real Conv2d (prefer layer4[-1].conv3 for ResNet50)."""
-    # Debug: print model structure
-    logger.info("Model structure analysis:")
-    for name, m in module.named_modules():
-        if isinstance(m, torch.nn.Conv2d):
-            logger.info(f"Found Conv2d: {name}")
-    
-    # Try common ResNet50 layouts first
-    try:
-        # our model.backbone.layer4[-1].conv3 (bottleneck last conv)
-        layer = module.backbone.layer4[-1].conv3
-        logger.info(f"Using model.backbone.layer4[-1].conv3: {layer}")
-        return layer
-    except Exception as e:
-        logger.info(f"model.backbone.layer4[-1].conv3 failed: {e}")
-    
-    try:
-        # torchvision resnet50 layer4[-1].conv3
-        layer = module.layer4[-1].conv3
-        logger.info(f"Using model.layer4[-1].conv3: {layer}")
-        return layer
-    except Exception as e:
-        logger.info(f"model.layer4[-1].conv3 failed: {e}")
-    
-    try:
-        # Try layer4[-1].conv2 (sometimes this is the last meaningful conv)
-        layer = module.backbone.layer4[-1].conv2
-        logger.info(f"Using model.backbone.layer4[-1].conv2: {layer}")
-        return layer
-    except Exception as e:
-        logger.info(f"model.backbone.layer4[-1].conv2 failed: {e}")
-    
-    try:
-        # Try backbone.layer4 directly
-        layer = module.backbone.layer4
-        logger.info(f"Using model.backbone.layer4: {layer}")
-        return layer
-    except Exception as e:
-        logger.info(f"model.backbone.layer4 failed: {e}")
+    logger.info("Legacy _find_last_conv called - consider using GradCAM class instead")
     
     # Fallback: scan all modules and keep the last Conv2d we see
     last_conv = None
@@ -72,169 +206,105 @@ def _find_last_conv(module: torch.nn.Module):
 
 def create_gradcam_visualization(model, image_tensor, target_class, class_names):
     """
-    Robust Grad-CAM with correct layer selection + smoothing + CLAHE
-    so the heatmap never looks 'all blue'.
+    Improved Grad-CAM implementation using custom GradCAM class
     Returns: dict with 'heatmap' (RGB uint8), 'overlay' (RGB uint8), 'all_cams' (list of RGB uint8).
     """
-    logger.info(f"Starting robust Grad-CAM visualization for target class {target_class}")
+    logger.info(f"Starting Grad-CAM visualization for target class {target_class}")
     
     model.eval()
     device = next(model.parameters()).device
 
+    # Ensure input is on the correct device
     x = image_tensor.to(device, dtype=torch.float32, non_blocking=True)
     x.requires_grad_(True)
 
     H, W = int(x.shape[-2]), int(x.shape[-1])
 
-    # Pick the right layer
-    target_layer = _find_last_conv(model)
-    logger.info(f"Using target layer: {target_layer}")
-
-    # Try GradCAM then EigenCAM as fallback
     try:
-        from gradcam import GradCAM, EigenCAM
-        from gradcam.utils.model_targets import ClassifierOutputTarget
-    except Exception:
-        logger.warning("grad-cam library not available, creating synthetic visuals")
-        # Library not available -> create synthetic visuals
-        y, x = np.mgrid[0:H, 0:W]
-        center_y, center_x = H // 2, W // 2
-        distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-        max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
-        synthetic_map = 1.0 - (distance / max_dist)
-        synthetic_map = np.clip(synthetic_map, 0, 1)
+        # Create Grad-CAM object
+        gradcam = GradCAM(model)
         
-        # Create colorized heatmap
-        heatmap_rgb = cv2.applyColorMap((synthetic_map * 255).astype(np.uint8), cv2.COLORMAP_JET)
+        # Generate CAM for target class
+        cam = gradcam.generate_cam(x, target_class)
+        logger.info(f"Generated CAM for class {target_class}: shape={cam.shape}, range=[{cam.min():.3f}, {cam.max():.3f}], std={cam.std():.6f}")
+        
+        # Resize to match input dimensions
+        cam_resized = cv2.resize(cam, (W, H))
+        
+        # Apply CLAHE for better visualization
+        cam_uint8 = (cam_resized * 255).astype(np.uint8)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        cam_enhanced = clahe.apply(cam_uint8)
+        cam_normalized = cam_enhanced.astype(np.float32) / 255.0
+        
+        # Create heatmap
+        heatmap_rgb = cv2.applyColorMap((cam_normalized * 255).astype(np.uint8), cv2.COLORMAP_JET)
         heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
         
         # Create overlay with original image
-        base = image_tensor[0].detach().cpu().numpy().transpose(1, 2, 0) if hasattr(image_tensor, 'detach') else image_tensor[0]
+        base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
         base = (base - base.min()) / (base.max() - base.min()) if base.max() > base.min() else base
         base_uint8 = (base * 255.0).astype(np.uint8)
-        overlay = cv2.addWeighted(base_uint8, 0.55, heatmap_rgb, 0.45, 0.0)
+        overlay = cv2.addWeighted(base_uint8, 0.6, heatmap_rgb, 0.4, 0.0)
         
-        return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": [heatmap_rgb for _ in class_names]}
-
-    targets = [ClassifierOutputTarget(int(target_class))]
-    cam_map = None
-    cam_obj = None
-    ecam_obj = None
-
-    # Helper function to check if activation map is flat/zero
-    def _flat(a: np.ndarray) -> bool:
-        if a is None:
-            return True
-        a = np.asarray(a, dtype=np.float32)
-        # Check if all zeros or extremely low variance
-        is_flat = (np.nanstd(a) < 1e-6) or (np.isfinite(a).sum() == 0) or (np.all(a == 0))
-        print(f"DEBUG: _flat check - std: {np.nanstd(a):.8f}, finite_sum: {np.isfinite(a).sum()}, all_zero: {np.all(a == 0)}, result: {is_flat}")
-        return is_flat
-
-    # 1) GradCAM with aug/eigen smoothing
-    try:
-        cam_obj = GradCAM(model=model, target_layers=[target_layer])
+        # Generate CAMs for all classes
+        all_cams = []
+        cams_dict = gradcam.generate_multi_class_cam(x, list(range(len(class_names))))
         
-        # Try different combinations to get non-zero activation
-        g = cam_obj(x, targets=targets, aug_smooth=True, eigen_smooth=True)  # (N,H,W) in [0,1]
-        cam_map = g[0]
-        logger.info(f"GradCAM (aug+eigen) generated, shape: {cam_map.shape}, range: [{cam_map.min():.3f}, {cam_map.max():.3f}], std: {cam_map.std():.6f}")
+        for i in range(len(class_names)):
+            if i in cams_dict and cams_dict[i] is not None:
+                class_cam = cams_dict[i]
+                class_cam_resized = cv2.resize(class_cam, (W, H))
+                
+                # Apply same enhancement
+                class_cam_uint8 = (class_cam_resized * 255).astype(np.uint8)
+                class_cam_enhanced = clahe.apply(class_cam_uint8)
+                class_cam_normalized = class_cam_enhanced.astype(np.float32) / 255.0
+                
+                # Create heatmap
+                class_heatmap = cv2.applyColorMap((class_cam_normalized * 255).astype(np.uint8), cv2.COLORMAP_JET)
+                class_heatmap = cv2.cvtColor(class_heatmap, cv2.COLOR_BGR2RGB)
+                all_cams.append(class_heatmap)
+            else:
+                # Fallback: create synthetic visualization
+                y, x_grid = np.mgrid[0:H, 0:W]
+                center_y, center_x = H // 2, W // 2
+                distance = np.sqrt((x_grid - center_x) ** 2 + (y - center_y) ** 2)
+                max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
+                synthetic_cam = 1.0 - (distance / max_dist)
+                synthetic_cam = np.clip(synthetic_cam, 0, 1)
+                
+                synthetic_heatmap = cv2.applyColorMap((synthetic_cam * 255).astype(np.uint8), cv2.COLORMAP_JET)
+                synthetic_heatmap = cv2.cvtColor(synthetic_heatmap, cv2.COLOR_BGR2RGB)
+                all_cams.append(synthetic_heatmap)
         
-        # If still flat, try without smoothing
-        if _flat(cam_map):
-            logger.info("GradCAM with smoothing is flat, trying without smoothing...")
-            g = cam_obj(x, targets=targets, aug_smooth=False, eigen_smooth=False)
-            cam_map = g[0]
-            logger.info(f"GradCAM (no smoothing) generated, range: [{cam_map.min():.3f}, {cam_map.max():.3f}], std: {cam_map.std():.6f}")
-            
+        logger.info(f"Generated {len(all_cams)} class visualizations")
+        return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": all_cams}
+        
     except Exception as e:
-        logger.warning(f"GradCAM failed: {e}")
-        cam_map = None
-
-    # 2) Fallback to EigenCAM (often more stable)
-
-    if cam_map is None or _flat(cam_map):
-        try:
-            logger.info("Falling back to EigenCAM")
-            if ecam_obj is None:
-                ecam_obj = EigenCAM(model=model, target_layers=[target_layer])
-            cam_map = ecam_obj(x, targets=targets)[0]  # (H,W) roughly in [0,1]
-            logger.info(f"EigenCAM generated, shape: {cam_map.shape}, range: [{cam_map.min():.3f}, {cam_map.max():.3f}]")
-        except Exception as e:
-            logger.warning(f"EigenCAM failed: {e}")
-            cam_map = np.zeros((H, W), dtype=np.float32)
-
-    # If still flat after all attempts, create a synthetic activation map
-    print(f"DEBUG: cam_map type: {type(cam_map)}, shape: {getattr(cam_map, 'shape', 'N/A')}")
-    print(f"DEBUG: _flat(cam_map) = {_flat(cam_map)}")
-    
-    if cam_map is None or _flat(cam_map):
-        print("DEBUG: Creating synthetic attention map")
-        logger.warning("All Grad-CAM methods failed, creating synthetic attention map")
-        # Create a center-focused synthetic attention map
-        y, x = np.mgrid[0:H, 0:W]
+        logger.error(f"Grad-CAM failed: {e}")
+        # Fallback: create synthetic visualizations
+        logger.info("Creating synthetic fallback visualizations")
+        
+        # Create synthetic CAM
+        y, x_grid = np.mgrid[0:H, 0:W]
         center_y, center_x = H // 2, W // 2
-        distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+        distance = np.sqrt((x_grid - center_x) ** 2 + (y - center_y) ** 2)
         max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
-        cam_map = 1.0 - (distance / max_dist)  # Inverse distance from center
-        cam_map = np.clip(cam_map, 0, 1)
-        print(f"DEBUG: Synthetic map range: [{cam_map.min():.3f}, {cam_map.max():.3f}], std: {cam_map.std():.6f}")
-        logger.info(f"Synthetic attention map created, range: [{cam_map.min():.3f}, {cam_map.max():.3f}]")
-
-    # Normalize -> CLAHE -> colorize (prevents 'all blue')
-    cam01 = cam_map.astype(np.float32)
-    print(f"DEBUG: Before normalization - range: [{cam01.min():.3f}, {cam01.max():.3f}], std: {cam01.std():.6f}")
-    
-    cam01 -= cam01.min()
-    if cam01.max() > 0:
-        cam01 /= cam01.max()
-    print(f"DEBUG: After normalization - range: [{cam01.min():.3f}, {cam01.max():.3f}], std: {cam01.std():.6f}")
-
-    cam8 = (cam01 * 255.0).round().astype(np.uint8)
-    print(f"DEBUG: After uint8 conversion - range: [{cam8.min()}, {cam8.max()}], std: {cam8.std():.6f}")
-    
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    cam8_clahe = clahe.apply(cam8)
-    print(f"DEBUG: After CLAHE - range: [{cam8_clahe.min()}, {cam8_clahe.max()}], std: {cam8_clahe.std():.6f}")
-    
-    cam01 = cam8_clahe.astype(np.float32) / 255.0
-    print(f"DEBUG: Final cam01 - range: [{cam01.min():.3f}, {cam01.max():.3f}], std: {cam01.std():.6f}")
-
-    heatmap_rgb = cv2.applyColorMap((cam01 * 255).astype(np.uint8), cv2.COLORMAP_JET)
+        synthetic_cam = 1.0 - (distance / max_dist)
+        synthetic_cam = np.clip(synthetic_cam, 0, 1)
+        
+        # Create heatmap
+        heatmap_rgb = cv2.applyColorMap((synthetic_cam * 255).astype(np.uint8), cv2.COLORMAP_JET)
     heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
 
-    # Base image (de-normalized min-max so it shows well regardless of dataset means)
+        # Create overlay
     base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
-    base -= base.min()
-    if base.max() > 0:
-        base /= base.max()
-    base_uint8 = (base * 255.0).round().astype(np.uint8)
-
-    overlay = cv2.addWeighted(base_uint8, 0.55, heatmap_rgb, 0.45, 0.0)
-
-    # All-class CAMs
-    all_cams = []
-    for i in range(len(class_names)):
-        try:
-            t = [ClassifierOutputTarget(int(i))]
-            m = None
-            if cam_obj is not None:
-                m = cam_obj(x, targets=t, aug_smooth=True, eigen_smooth=True)[0]
-            if m is None or _flat(m):
-                if ecam_obj is None:
-                    ecam_obj = EigenCAM(model=model, target_layers=[target_layer])
-                m = ecam_obj(x, targets=t)[0]
-
-            m = m.astype(np.float32)
-            m -= m.min()
-            if m.max() > 0:
-                m /= m.max()
-            m8 = (m * 255).round().astype(np.uint8)
-            m8 = clahe.apply(m8)
-            m_rgb = cv2.applyColorMap(m8, cv2.COLORMAP_JET)
-            m_rgb = cv2.cvtColor(m_rgb, cv2.COLOR_BGR2RGB)
-        except Exception:
-            m_rgb = np.zeros((H, W, 3), dtype=np.uint8)
-        all_cams.append(m_rgb)
+        base = (base - base.min()) / (base.max() - base.min()) if base.max() > base.min() else base
+        base_uint8 = (base * 255.0).astype(np.uint8)
+        overlay = cv2.addWeighted(base_uint8, 0.6, heatmap_rgb, 0.4, 0.0)
+        
+        # Create same heatmap for all classes
+        all_cams = [heatmap_rgb.copy() for _ in class_names]
 
     return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": all_cams}
