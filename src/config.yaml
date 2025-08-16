@@ -1,0 +1,120 @@
+# Medical AI Assistant Configuration
+# Multi-class Chest X-ray Classifier
+
+# Dataset Configuration
+dataset:
+  classes:
+    - "Normal"
+    - "Pneumonia"
+    - "COVID-19"
+    - "Tuberculosis"
+    - "Lung Cancer"
+    - "Cardiomegaly"
+    - "Pleural Effusion"
+    - "Pneumothorax"
+  
+  # Dataset paths
+  data_dir: "data/toy_dataset"
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  random_seed: 42
+  
+  # Image processing
+  input_size: 512
+  crop_size: 480
+  num_channels: 3
+  max_file_size_mb: 25
+
+# Data Augmentation
+augmentation:
+  train:
+    RandomResizedCrop:
+      size: [512, 512]
+      scale: [0.8, 1.0]
+      ratio: [0.9, 1.1]
+    HorizontalFlip:
+      p: 0.0
+    Rotation:
+      limit: 5
+      p: 0.3
+    RandomBrightnessContrast:
+      brightness_limit: 0.1
+      contrast_limit: 0.1
+      p: 0.3
+    GaussNoise:
+      var_limit: 10.0
+      p: 0.2
+  
+  val_test:
+    Resize:
+      height: 512
+      width: 512
+    CenterCrop:
+      height: 480
+      width: 480
+    Normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+# Model Configuration
+model:
+  name: "resnet50"
+  pretrained: true
+  num_classes: 8
+  dropout_rate: 0.2
+  use_compile: true
+
+# Training Configuration
+training:
+  batch_size: 4
+  epochs: 5
+  learning_rate: 0.001
+  weight_decay: 0.01
+  early_stopping:
+    patience: 3
+    delta: 0.001
+  mixed_precision: false
+  gradient_clipping: 1.0
+  gradient_clip_val: 1.0
+  
+  # Optimizer
+  optimizer: "adamw"
+  scheduler: "cosine"
+  
+  # Loss
+  loss: "focal"
+  focal_loss:
+    gamma: 2.0
+    alpha_from_weights: true
+  class_balancing: true
+  use_weighted_sampler: false
+
+# Validation Configuration
+validation:
+  clip_threshold: 0.7
+  face_detection: true
+  min_resolution: [256, 256]
+  max_aspect_ratio: 3.0
+  min_color_variance: 10.0
+  color_variance_threshold: 10.0
+
+# Paths
+paths:
+  models_dir: "models"
+  logs_dir: "logs"
+  plots_dir: "plots"
+  data_dir: "data"
+
+# Export Configuration
+export:
+  formats: ["torchscript", "onnx"]
+  output_dir: "models/exported"
+
+# Streamlit Configuration
+streamlit:
+  title: "Medical AI Assistant - Chest X-ray Classifier"
+  description: "AI-powered chest X-ray analysis for multiple conditions"
+  max_file_size: 25
+  supported_formats: ["png", "jpg", "jpeg", "dicom", "pdf"]
+  theme: "light"
