@@ -476,7 +476,7 @@ def display_results(prediction_results, config, image, image_tensor, model):
                         else:
                             hm_display = hm
                         
-                        st.image(hm_display, use_column_width=True, caption="Grad-CAM Heatmap", output_format="PNG")
+                        st.image(hm_display, use_container_width=True, caption="Grad-CAM Heatmap", output_format="PNG")
                 else:
                     st.error("Failed to generate heatmap")
             with tab2:
@@ -488,7 +488,7 @@ def display_results(prediction_results, config, image, image_tensor, model):
                     else:
                         overlay_display = overlay
                     
-                    st.image(overlay_display, use_column_width=True, caption="Overlay Visualization", output_format="PNG")
+                    st.image(overlay_display, use_container_width=True, caption="Overlay Visualization", output_format="PNG")
                 else:
                     st.warning("Overlay generation failed")
             with tab3:
@@ -503,7 +503,7 @@ def display_results(prediction_results, config, image, image_tensor, model):
                             else:
                                 cam_display = cam
                             
-                            st.image(cam_display, use_column_width=True, caption=cname, output_format="PNG")
+                            st.image(cam_display, use_container_width=True, caption=cname, output_format="PNG")
                         else:
                             st.warning(f"CAM for {cname} failed")
 
@@ -728,7 +728,7 @@ def render_results_and_gradcam(uploaded_files, config, model, validator):
             # Display original image in a card
             st.markdown('<div class="image-preview">', unsafe_allow_html=True)
             st.markdown('<h4>Original Image</h4>', unsafe_allow_html=True)
-            st.image(image, use_column_width=True, caption=f"Original: {uploaded_file.name}")
+            st.image(image, use_container_width=True, caption=f"Original: {uploaded_file.name}")
             st.markdown('</div>', unsafe_allow_html=True)
             
             # Input validation

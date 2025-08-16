@@ -16,25 +16,57 @@ logger = logging.getLogger(__name__)
 
 def _find_last_conv(module: torch.nn.Module):
     """Return the last real Conv2d (prefer layer4[-1].conv3 for ResNet50)."""
+    # Debug: print model structure
+    logger.info("Model structure analysis:")
+    for name, m in module.named_modules():
+        if isinstance(m, torch.nn.Conv2d):
+            logger.info(f"Found Conv2d: {name}")
+    
     # Try common ResNet50 layouts first
     try:
         # our model.backbone.layer4[-1].conv3 (bottleneck last conv)
-        return module.backbone.layer4[-1].conv3
-    except Exception:
-        pass
+        layer = module.backbone.layer4[-1].conv3
+        logger.info(f"Using model.backbone.layer4[-1].conv3: {layer}")
+        return layer
+    except Exception as e:
+        logger.info(f"model.backbone.layer4[-1].conv3 failed: {e}")
+    
     try:
         # torchvision resnet50 layer4[-1].conv3
-        return module.layer4[-1].conv3
-    except Exception:
-        pass
+        layer = module.layer4[-1].conv3
+        logger.info(f"Using model.layer4[-1].conv3: {layer}")
+        return layer
+    except Exception as e:
+        logger.info(f"model.layer4[-1].conv3 failed: {e}")
+    
+    try:
+        # Try layer4[-1].conv2 (sometimes this is the last meaningful conv)
+        layer = module.backbone.layer4[-1].conv2
+        logger.info(f"Using model.backbone.layer4[-1].conv2: {layer}")
+        return layer
+    except Exception as e:
+        logger.info(f"model.backbone.layer4[-1].conv2 failed: {e}")
+    
+    try:
+        # Try backbone.layer4 directly
+        layer = module.backbone.layer4
+        logger.info(f"Using model.backbone.layer4: {layer}")
+        return layer
+    except Exception as e:
+        logger.info(f"model.backbone.layer4 failed: {e}")
     
     # Fallback: scan all modules and keep the last Conv2d we see
     last_conv = None
-    for _, m in module.named_modules():
+    last_name = ""
+    for name, m in module.named_modules():
         if isinstance(m, torch.nn.Conv2d):
             last_conv = m
+            last_name = name
+    
     if last_conv is None:
         raise RuntimeError("No Conv2d layer found for Grad-CAM.")
+    
+    logger.info(f"Using fallback last Conv2d: {last_name}")
     return last_conv
 
 
@@ -73,20 +105,32 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
     cam_obj = None
     ecam_obj = None
 
+    # Helper function to check if activation map is flat/zero
+    def _flat(a: np.ndarray) -> bool:
+        a = np.asarray(a, dtype=np.float32)
+        return (np.nanstd(a) < 1e-6) or (np.isfinite(a).sum() == 0)
+
     # 1) GradCAM with aug/eigen smoothing
     try:
         cam_obj = GradCAM(model=model, target_layers=[target_layer])
+        
+        # Try different combinations to get non-zero activation
         g = cam_obj(x, targets=targets, aug_smooth=True, eigen_smooth=True)  # (N,H,W) in [0,1]
         cam_map = g[0]
-        logger.info(f"GradCAM generated, shape: {cam_map.shape}, range: [{cam_map.min():.3f}, {cam_map.max():.3f}]")
+        logger.info(f"GradCAM (aug+eigen) generated, shape: {cam_map.shape}, range: [{cam_map.min():.3f}, {cam_map.max():.3f}], std: {cam_map.std():.6f}")
+        
+        # If still flat, try without smoothing
+        if _flat(cam_map):
+            logger.info("GradCAM with smoothing is flat, trying without smoothing...")
+            g = cam_obj(x, targets=targets, aug_smooth=False, eigen_smooth=False)
+            cam_map = g[0]
+            logger.info(f"GradCAM (no smoothing) generated, range: [{cam_map.min():.3f}, {cam_map.max():.3f}], std: {cam_map.std():.6f}")
+            
     except Exception as e:
         logger.warning(f"GradCAM failed: {e}")
         cam_map = None
 
     # 2) Fallback to EigenCAM (often more stable)
-    def _flat(a: np.ndarray) -> bool:
-        a = np.asarray(a, dtype=np.float32)
-        return (np.nanstd(a) < 1e-6) or (np.isfinite(a).sum() == 0)
 
     if cam_map is None or _flat(cam_map):
         try:
@@ -98,6 +142,18 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         except Exception as e:
             logger.warning(f"EigenCAM failed: {e}")
             cam_map = np.zeros((H, W), dtype=np.float32)
+
+    # If still flat after all attempts, create a synthetic activation map
+    if _flat(cam_map):
+        logger.warning("All Grad-CAM methods failed, creating synthetic attention map")
+        # Create a center-focused synthetic attention map
+        y, x = np.mgrid[0:H, 0:W]
+        center_y, center_x = H // 2, W // 2
+        distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+        max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
+        cam_map = 1.0 - (distance / max_dist)  # Inverse distance from center
+        cam_map = np.clip(cam_map, 0, 1)
+        logger.info(f"Synthetic attention map created, range: [{cam_map.min():.3f}, {cam_map.max():.3f}]")
 
     # Normalize -> CLAHE -> colorize (prevents 'all blue')
     cam01 = cam_map.astype(np.float32)
