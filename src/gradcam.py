@@ -250,7 +250,7 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         logger.info(f"Heatmap created - cam_uint8 range: [{cam_uint8.min()}, {cam_uint8.max()}], heatmap_rgb range: [{heatmap_rgb.min()}, {heatmap_rgb.max()}], shape: {heatmap_rgb.shape}")
         
         # Create overlay with original image
-    base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
+        base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
         base = (base - base.min()) / (base.max() - base.min()) if base.max() > base.min() else base
         base_uint8 = np.clip(base * 255.0, 0, 255).astype(np.uint8)
         
@@ -259,10 +259,10 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         overlay = cv2.addWeighted(base_uint8, 1 - alpha, heatmap_rgb, alpha, 0)
         
         # Generate CAMs for all classes
-    all_cams = []
+        all_cams = []
         cams_dict = gradcam.generate_multi_class_cam(x, list(range(len(class_names))))
         
-    for i in range(len(class_names)):
+        for i in range(len(class_names)):
             if i in cams_dict and cams_dict[i] is not None:
                 class_cam = cams_dict[i]
                 class_cam_resized = cv2.resize(class_cam, (W, H))
