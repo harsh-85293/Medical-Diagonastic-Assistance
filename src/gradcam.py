@@ -296,15 +296,15 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         
         # Create heatmap
         heatmap_rgb = cv2.applyColorMap((synthetic_cam * 255).astype(np.uint8), cv2.COLORMAP_JET)
-    heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
-
+        heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
+        
         # Create overlay
-    base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
+        base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
         base = (base - base.min()) / (base.max() - base.min()) if base.max() > base.min() else base
         base_uint8 = (base * 255.0).astype(np.uint8)
         overlay = cv2.addWeighted(base_uint8, 0.6, heatmap_rgb, 0.4, 0.0)
         
         # Create same heatmap for all classes
         all_cams = [heatmap_rgb.copy() for _ in class_names]
-
-    return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": all_cams}
+        
+        return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": all_cams}
