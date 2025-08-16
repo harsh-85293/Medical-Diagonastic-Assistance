@@ -231,15 +231,20 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         # Resize to match input dimensions
         cam_resized = cv2.resize(cam, (W, H))
         
-        # Apply CLAHE for better visualization
-        cam_uint8 = (cam_resized * 255).astype(np.uint8)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        cam_enhanced = clahe.apply(cam_uint8)
-        cam_normalized = cam_enhanced.astype(np.float32) / 255.0
+        # Normalize CAM to 0-1 range properly
+        cam_norm = cam_resized.astype(np.float32)
+        cam_norm = (cam_norm - cam_norm.min()) / (cam_norm.max() - cam_norm.min() + 1e-8)
         
-        # Create heatmap
-        heatmap_rgb = cv2.applyColorMap((cam_normalized * 255).astype(np.uint8), cv2.COLORMAP_JET)
+        # Apply CLAHE for better visualization
+        cam_uint8 = (cam_norm * 255).astype(np.uint8)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        cam_enhanced = clahe.apply(cam_uint8)
+        
+        # Create heatmap with better colormap
+        heatmap_rgb = cv2.applyColorMap(cam_enhanced, cv2.COLORMAP_JET)
         heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
+        
+        logger.info(f"Heatmap created - range: [{heatmap_rgb.min()}, {heatmap_rgb.max()}], shape: {heatmap_rgb.shape}")
         
         # Create overlay with original image
         base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
@@ -256,13 +261,15 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
                 class_cam = cams_dict[i]
                 class_cam_resized = cv2.resize(class_cam, (W, H))
                 
+                # Normalize properly
+                class_cam_norm = (class_cam_resized - class_cam_resized.min()) / (class_cam_resized.max() - class_cam_resized.min() + 1e-8)
+                
                 # Apply same enhancement
-                class_cam_uint8 = (class_cam_resized * 255).astype(np.uint8)
+                class_cam_uint8 = (class_cam_norm * 255).astype(np.uint8)
                 class_cam_enhanced = clahe.apply(class_cam_uint8)
-                class_cam_normalized = class_cam_enhanced.astype(np.float32) / 255.0
                 
                 # Create heatmap
-                class_heatmap = cv2.applyColorMap((class_cam_normalized * 255).astype(np.uint8), cv2.COLORMAP_JET)
+                class_heatmap = cv2.applyColorMap(class_cam_enhanced, cv2.COLORMAP_JET)
                 class_heatmap = cv2.cvtColor(class_heatmap, cv2.COLOR_BGR2RGB)
                 all_cams.append(class_heatmap)
             else:
@@ -274,7 +281,10 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
                 synthetic_cam = 1.0 - (distance / max_dist)
                 synthetic_cam = np.clip(synthetic_cam, 0, 1)
                 
-                synthetic_heatmap = cv2.applyColorMap((synthetic_cam * 255).astype(np.uint8), cv2.COLORMAP_JET)
+                # Apply same enhancement to synthetic too
+                synthetic_uint8 = (synthetic_cam * 255).astype(np.uint8)
+                synthetic_enhanced = clahe.apply(synthetic_uint8)
+                synthetic_heatmap = cv2.applyColorMap(synthetic_enhanced, cv2.COLORMAP_JET)
                 synthetic_heatmap = cv2.cvtColor(synthetic_heatmap, cv2.COLOR_BGR2RGB)
                 all_cams.append(synthetic_heatmap)
         
@@ -294,17 +304,22 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         synthetic_cam = 1.0 - (distance / max_dist)
         synthetic_cam = np.clip(synthetic_cam, 0, 1)
         
-        # Create heatmap
-        heatmap_rgb = cv2.applyColorMap((synthetic_cam * 255).astype(np.uint8), cv2.COLORMAP_JET)
-        heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
+        # Apply enhanced processing to synthetic CAM too
+        cam_uint8 = (synthetic_cam * 255).astype(np.uint8)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        cam_enhanced = clahe.apply(cam_uint8)
         
+        # Create heatmap
+        heatmap_rgb = cv2.applyColorMap(cam_enhanced, cv2.COLORMAP_JET)
+    heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
+
         # Create overlay
-        base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
+    base = x[0].detach().cpu().numpy().transpose(1, 2, 0)
         base = (base - base.min()) / (base.max() - base.min()) if base.max() > base.min() else base
         base_uint8 = (base * 255.0).astype(np.uint8)
         overlay = cv2.addWeighted(base_uint8, 0.6, heatmap_rgb, 0.4, 0.0)
         
         # Create same heatmap for all classes
         all_cams = [heatmap_rgb.copy() for _ in class_names]
-        
-        return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": all_cams}
+
+    return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": all_cams}
