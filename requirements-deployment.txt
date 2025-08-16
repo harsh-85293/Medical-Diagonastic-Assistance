@@ -1,0 +1,39 @@
+# Deployment-optimized requirements
+# Use this for cloud deployments with stricter constraints
+
+# Core PyTorch (CPU-only for lighter deployment)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Data processing and augmentation  
+albumentations>=1.3.0
+opencv-python-headless>=4.8.0,<5.0.0
+Pillow>=9.0.0
+numpy>=1.21.0,<2.0
+pandas>=1.5.0
+
+# Medical image formats
+pydicom>=2.4.0
+pdf2image>=1.16.0
+
+# Machine learning and evaluation
+scikit-learn>=1.3.0
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Model explainability
+grad-cam==1.4.6
+
+# CLIP for input validation
+open-clip-torch>=2.20.0
+transformers>=4.30.0
+
+# Streamlit and UI
+streamlit>=1.28.0
+
+# Utilities
+tqdm>=4.64.0
+PyYAML>=6.0
+
+# Additional dependencies for specific use cases
+timm>=0.9.0

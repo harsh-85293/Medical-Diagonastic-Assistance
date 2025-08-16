@@ -18,17 +18,51 @@ try:
     print("OpenCV imported successfully")
 except ImportError as e:
     print(f"OpenCV import failed: {e}")
-    st.error("⚠️ OpenCV not found. Installing opencv-python-headless...")
-    try:
-        import subprocess
-        import sys
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "opencv-python-headless==4.8.1.78", "--force-reinstall"])
-        import cv2
-        st.success("✅ OpenCV installed successfully!")
-        st.rerun()
-    except Exception as install_error:
-        st.error(f"❌ Failed to install OpenCV: {install_error}")
-        st.error("Please check deployment requirements: opencv-python-headless==4.8.1.78")
+    st.error("⚠️ OpenCV not found. Attempting to install...")
+    
+    # Try multiple OpenCV versions for better compatibility
+    opencv_versions = [
+        "opencv-python-headless>=4.8.0,<5.0.0",
+        "opencv-python-headless==4.9.0.80", 
+        "opencv-python-headless==4.8.0.76",
+        "opencv-python-headless"  # Latest stable
+    ]
+    
+    installation_success = False
+    for version in opencv_versions:
+        try:
+            import subprocess
+            import sys
+            st.info(f"🔄 Trying to install {version}...")
+            subprocess.check_call([
+                sys.executable, "-m", "pip", "install", version, 
+                "--no-cache-dir", "--force-reinstall"
+            ], timeout=300)
+            import cv2
+            st.success(f"✅ OpenCV installed successfully with {version}!")
+            installation_success = True
+            st.rerun()
+            break
+        except Exception as install_error:
+            st.warning(f"⚠️ Failed to install {version}: {str(install_error)[:100]}...")
+            continue
+    
+    if not installation_success:
+        st.error("❌ Failed to install OpenCV with any version. Please check your deployment environment.")
+        st.error("**Deployment Requirements:**")
+        st.code("""
+# Add to your deployment requirements:
+opencv-python-headless>=4.8.0,<5.0.0
+
+# Or try alternative packages:
+opencv-contrib-python-headless>=4.8.0
+        """)
+        st.error("**Alternative Solutions:**")
+        st.markdown("""
+        1. **Streamlit Cloud/Heroku**: Add `opencv-python-headless` to requirements.txt
+        2. **Docker**: Install system dependencies: `apt-get install libgl1-mesa-glx`
+        3. **Manual Install**: `pip install opencv-python-headless --no-cache-dir`
+        """)
         st.stop()
 from PIL import Image
 import yaml
