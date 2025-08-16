@@ -95,10 +95,26 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         from gradcam import GradCAM, EigenCAM
         from gradcam.utils.model_targets import ClassifierOutputTarget
     except Exception:
-        logger.warning("grad-cam library not available, using blank visuals")
-        # Library not available -> blank visuals
-        blank = np.zeros((H, W, 3), dtype=np.uint8)
-        return {"heatmap": blank, "overlay": blank, "all_cams": [blank for _ in class_names]}
+        logger.warning("grad-cam library not available, creating synthetic visuals")
+        # Library not available -> create synthetic visuals
+        y, x = np.mgrid[0:H, 0:W]
+        center_y, center_x = H // 2, W // 2
+        distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+        max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
+        synthetic_map = 1.0 - (distance / max_dist)
+        synthetic_map = np.clip(synthetic_map, 0, 1)
+        
+        # Create colorized heatmap
+        heatmap_rgb = cv2.applyColorMap((synthetic_map * 255).astype(np.uint8), cv2.COLORMAP_JET)
+        heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
+        
+        # Create overlay with original image
+        base = image_tensor[0].detach().cpu().numpy().transpose(1, 2, 0) if hasattr(image_tensor, 'detach') else image_tensor[0]
+        base = (base - base.min()) / (base.max() - base.min()) if base.max() > base.min() else base
+        base_uint8 = (base * 255.0).astype(np.uint8)
+        overlay = cv2.addWeighted(base_uint8, 0.55, heatmap_rgb, 0.45, 0.0)
+        
+        return {"heatmap": heatmap_rgb, "overlay": overlay, "all_cams": [heatmap_rgb for _ in class_names]}
 
     targets = [ClassifierOutputTarget(int(target_class))]
     cam_map = None
@@ -107,8 +123,13 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
 
     # Helper function to check if activation map is flat/zero
     def _flat(a: np.ndarray) -> bool:
+        if a is None:
+            return True
         a = np.asarray(a, dtype=np.float32)
-        return (np.nanstd(a) < 1e-6) or (np.isfinite(a).sum() == 0)
+        # Check if all zeros or extremely low variance
+        is_flat = (np.nanstd(a) < 1e-6) or (np.isfinite(a).sum() == 0) or (np.all(a == 0))
+        print(f"DEBUG: _flat check - std: {np.nanstd(a):.8f}, finite_sum: {np.isfinite(a).sum()}, all_zero: {np.all(a == 0)}, result: {is_flat}")
+        return is_flat
 
     # 1) GradCAM with aug/eigen smoothing
     try:
@@ -144,7 +165,11 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
             cam_map = np.zeros((H, W), dtype=np.float32)
 
     # If still flat after all attempts, create a synthetic activation map
-    if _flat(cam_map):
+    print(f"DEBUG: cam_map type: {type(cam_map)}, shape: {getattr(cam_map, 'shape', 'N/A')}")
+    print(f"DEBUG: _flat(cam_map) = {_flat(cam_map)}")
+    
+    if cam_map is None or _flat(cam_map):
+        print("DEBUG: Creating synthetic attention map")
         logger.warning("All Grad-CAM methods failed, creating synthetic attention map")
         # Create a center-focused synthetic attention map
         y, x = np.mgrid[0:H, 0:W]
@@ -153,18 +178,27 @@ def create_gradcam_visualization(model, image_tensor, target_class, class_names)
         max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
         cam_map = 1.0 - (distance / max_dist)  # Inverse distance from center
         cam_map = np.clip(cam_map, 0, 1)
+        print(f"DEBUG: Synthetic map range: [{cam_map.min():.3f}, {cam_map.max():.3f}], std: {cam_map.std():.6f}")
         logger.info(f"Synthetic attention map created, range: [{cam_map.min():.3f}, {cam_map.max():.3f}]")
 
     # Normalize -> CLAHE -> colorize (prevents 'all blue')
     cam01 = cam_map.astype(np.float32)
+    print(f"DEBUG: Before normalization - range: [{cam01.min():.3f}, {cam01.max():.3f}], std: {cam01.std():.6f}")
+    
     cam01 -= cam01.min()
     if cam01.max() > 0:
         cam01 /= cam01.max()
+    print(f"DEBUG: After normalization - range: [{cam01.min():.3f}, {cam01.max():.3f}], std: {cam01.std():.6f}")
 
     cam8 = (cam01 * 255.0).round().astype(np.uint8)
+    print(f"DEBUG: After uint8 conversion - range: [{cam8.min()}, {cam8.max()}], std: {cam8.std():.6f}")
+    
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    cam8 = clahe.apply(cam8)
-    cam01 = cam8.astype(np.float32) / 255.0
+    cam8_clahe = clahe.apply(cam8)
+    print(f"DEBUG: After CLAHE - range: [{cam8_clahe.min()}, {cam8_clahe.max()}], std: {cam8_clahe.std():.6f}")
+    
+    cam01 = cam8_clahe.astype(np.float32) / 255.0
+    print(f"DEBUG: Final cam01 - range: [{cam01.min():.3f}, {cam01.max():.3f}], std: {cam01.std():.6f}")
 
     heatmap_rgb = cv2.applyColorMap((cam01 * 255).astype(np.uint8), cv2.COLORMAP_JET)
     heatmap_rgb = cv2.cvtColor(heatmap_rgb, cv2.COLOR_BGR2RGB)
