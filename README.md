@@ -349,9 +349,6 @@ streamlit run app/app.py --server.port 8501 --server.address 0.0.0.0
 - Ensure all tests pass: `pytest`
 - Maintain test coverage
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -361,19 +358,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **CLIP**: OpenAI
 - **Streamlit**: Streamlit Inc.
 
-## 📞 Support
 
-### Issues
-- GitHub Issues: [Create Issue](https://github.com/your-repo/issues)
-- Documentation: Check this README and inline code comments
-
-### Community
-- Discussions: GitHub Discussions
-- Wiki: Project Wiki for detailed guides
 
 ### Contact
-- Email: your-email@example.com
-- Twitter: @your-handle
+- Email: harsh.ramchandani122003@gmail.com
 
 ---
 
