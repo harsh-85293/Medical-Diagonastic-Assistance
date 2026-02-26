@@ -166,7 +166,7 @@ streamlit run app/app.py
 streamlit run app/app.py --server.port 8501 --server.address 0.0.0.0
 ```
 
-## ⚙️ Configuration
+##Configuration
 
 The `src/config.yaml` file contains all configurable parameters:
 
