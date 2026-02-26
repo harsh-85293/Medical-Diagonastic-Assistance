@@ -201,7 +201,7 @@ validation:
   color_variance_threshold: 0.3
 ```
 
-## 🔧 Customization
+Customization
 
 ### Adding New Classes
 1. Update `src/config.yaml`:
