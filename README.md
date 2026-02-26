@@ -1,8 +1,8 @@
-# 🫁 Medical AI Assistant - Chest X-ray Classifier
+Medical AI Assistant - Chest X-ray Classifier
 
 A comprehensive, production-ready medical AI system for chest X-ray classification with robust input validation, explainability, and a modern Streamlit interface.
 
-## 🎯 Project Overview
+Project Overview
 
 This project implements a multi-class chest X-ray classifier using PyTorch and ResNet50, designed for educational and research purposes. It includes:
 
@@ -12,7 +12,7 @@ This project implements a multi-class chest X-ray classifier using PyTorch and R
 - **Modern UI**: Streamlit-based web application
 - **Production Ready**: Comprehensive training, evaluation, and deployment pipeline
 
-## 🚀 Features
+Features
 
 ### Core Functionality
 - **8-Class Classification**: Normal, Pneumonia, COVID-19, Tuberculosis, Lung Cancer, Cardiomegaly, Pleural Effusion, Pneumothorax
@@ -36,14 +36,14 @@ This project implements a multi-class chest X-ray classifier using PyTorch and R
 - **Interactive Results**: Expandable result cards
 - **Professional Styling**: Medical-grade UI/UX
 
-## 📋 Prerequisites
+Prerequisites
 
 - Python 3.8+
 - CUDA-compatible GPU (recommended for training)
 - 8GB+ RAM
 - 10GB+ disk space
 
-## 🛠️ Installation
+Installation
 
 ### 1. Clone the Repository
 ```bash
@@ -68,7 +68,7 @@ python -c "import torch; print(f'PyTorch {torch.__version__}')"
 python -c "import streamlit; print(f'Streamlit {streamlit.__version__}')"
 ```
 
-## 🏗️ Project Structure
+Project Structure
 
 ```
 medical-ai-assistant/
@@ -92,7 +92,7 @@ medical-ai-assistant/
 └── README.md              # This file
 ```
 
-## 🚀 Quick Start
+Quick Start
 
 ### 1. Prepare Dataset
 Organize your chest X-ray images in the following structure:
@@ -122,7 +122,7 @@ python -m src.eval --config src/config.yaml --ckpt models/best.ckpt --data_dir d
 streamlit run app/app.py
 ```
 
-## 📚 Usage Examples
+Usage Examples
 
 ### Training Commands
 
@@ -249,7 +249,7 @@ augmentation:
       param2: value2
 ```
 
-## 📊 Model Performance
+Model Performance
 
 ### Expected Results
 - **Validation Accuracy**: ≥92% (with sufficient data)
@@ -261,7 +261,7 @@ augmentation:
 - **Data Loading**: Multi-worker DataLoader with pin_memory
 - **Model Compilation**: torch.compile for inference acceleration
 
-## 🧪 Testing
+Testing
 
 ### Unit Tests
 ```bash
@@ -283,7 +283,7 @@ import numpy as np
 # Test with sample images
 "
 
-## 🚀 Deployment
+Deployment
 
 ### Streamlit Cloud
 1. Push code to GitHub
@@ -311,7 +311,7 @@ sudo apt-get install -y poppler-utils
 streamlit run app/app.py --server.port 8501 --server.address 0.0.0.0
 ```
 
-## 🔒 Security & Safety
+Security & Safety
 
 ### Input Validation
 - **CLIP-based Validation**: Zero-shot classification for medical vs non-medical
@@ -320,7 +320,7 @@ streamlit run app/app.py --server.port 8501 --server.address 0.0.0.0
 - **Sanitization**: Secure file handling and processing
 
 ### Medical Disclaimer
-⚠️ **IMPORTANT**: This tool is for educational and research purposes only. It is NOT intended for clinical use. Always consult qualified healthcare professionals for medical decisions.
+**IMPORTANT**: This tool is for educational and research purposes only. It is NOT intended for clinical use. Always consult qualified healthcare professionals for medical decisions.
 
 ### Data Privacy
 - No data is stored permanently
@@ -328,7 +328,7 @@ streamlit run app/app.py --server.port 8501 --server.address 0.0.0.0
 - No external API calls for validation
 - Local model inference only
 
-## 🤝 Contributing
+Contributing
 
 ### Development Setup
 1. Fork the repository
@@ -350,7 +350,7 @@ streamlit run app/app.py --server.port 8501 --server.address 0.0.0.0
 - Maintain test coverage
 
 
-## 🙏 Acknowledgments
+Acknowledgments
 
 - **ResNet Architecture**: Microsoft Research
 - **Focal Loss**: Facebook AI Research
@@ -362,7 +362,6 @@ streamlit run app/app.py --server.port 8501 --server.address 0.0.0.0
 
 ### Contact
 - Email: harsh.ramchandani122003@gmail.com
-
 ---
 
 **Made with ❤️ for the medical AI community**
